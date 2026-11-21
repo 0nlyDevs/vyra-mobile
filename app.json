@@ -1,0 +1,87 @@
+{
+  "expo": {
+    "name": "Vyra",
+    "slug": "vyra",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "vyra",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "org.onlydevs.vyra",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "org.onlydevs.vyra",
+      "adaptiveIcon": {
+        "backgroundColor": "#0a0a0b",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["android.permission.RECORD_AUDIO"]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#f3f2ee",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 120,
+          "dark": { "backgroundColor": "#0a0a0b", "image": "./assets/images/splash-icon-dark.png" }
+        }
+      ],
+      [
+        "expo-share-intent",
+        {
+          "iosActivationRules": {
+            "NSExtensionActivationSupportsText": true,
+            "NSExtensionActivationSupportsWebURLWithMaxCount": 1,
+            "NSExtensionActivationSupportsWebPageWithMaxCount": 1,
+            "NSExtensionActivationSupportsImageWithMaxCount": 10,
+            "NSExtensionActivationSupportsMovieWithMaxCount": 1,
+            "NSExtensionActivationSupportsFileWithMaxCount": 1
+          },
+          "androidIntentFilters": ["text/*", "image/*", "video/*", "audio/*", "application/pdf"],
+          "androidMultiIntentFilters": ["image/*"]
+        }
+      ],
+      "expo-secure-store",
+      "expo-video",
+      ["expo-audio", { "microphonePermission": "Vyra utilise le micro pour dicter une question, enregistrer un démenti ou un extrait entendu à la radio.", "enableBackgroundPlayback": false }],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Vyra ouvre les photos et vidéos que vous choisissez pour les vérifier.",
+          "cameraPermission": "Vyra photographie le papier que vous voulez vérifier, et votre carte de presse à l'inscription.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-build-properties",
+        { "android": { "usesCleartextTraffic": true, "extraProguardRules": "# Room creates WorkManager's database by reflection before React Native starts.\n-keep class androidx.work.impl.WorkDatabase_Impl {\n    public <init>();\n}" } }
+      ],
+      "expo-font",
+      "expo-sharing",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Vyra lit le QR des sceaux et photographie le papier à vérifier.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ],
+      "expo-background-task",
+      [
+        "expo-notifications",
+        { "icon": "./assets/images/android-icon-monochrome.png", "color": "#0a0a0b", "defaultChannel": "vyra-ready" }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

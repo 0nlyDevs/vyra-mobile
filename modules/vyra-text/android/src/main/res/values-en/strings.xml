@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="vyra_menu_check">Vyra</string>
+  <string name="vyra_menu_translate">Translate FR ↔ MG</string>
+  <string name="vyra_menu_debunk">Replace with the fact-check</string>
+  <string name="vyra_work_channel">Checks in progress</string>
+  <string name="vyra_tile">Check</string>
+  <string name="vyra_tile_sub">What you just copied</string>
+  <string name="vyra_sc_clip">Check the clipboard</string>
+  <string name="vyra_sc_scan">Scan</string>
+  <string name="vyra_widget_title">Vyra · latest verdicts</string>
+  <string name="vyra_widget_verify">Check</string>
+  <string name="vyra_widget_empty">No signed verdict yet.</string>
+  <string name="vyra_widget_desc">The desk\'s three latest verdicts and a Check button</string>
+</resources>
