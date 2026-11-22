@@ -21,7 +21,7 @@ export function readError(status: number, body: unknown): ApiError {
 }
 
 
-/** L'identifiant d'une affaire dans un lien du site (`/court/<id>`, `/cases/<id>`, `/verifier/<id>`). */
+/** L'identifiant d'une affaire dans un lien du site (`/court/<id>`, `/cases/<id>`, `/check/<id>`). */
 export function caseIdFrom(href: string): string | null {
   return href.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0] ?? null;
 }

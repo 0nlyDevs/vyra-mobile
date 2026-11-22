@@ -8,6 +8,7 @@ const id = "00000000-0000-4000-8000-000000000002";
 test("une affaire, même proposée vers le tribunal, ouvre son dossier", () => {
   assert.deepEqual(appRoute(`/cases/${id}`), { pathname: "/case/[id]", params: { id } });
   assert.deepEqual(appRoute(`/court/${id}`), { pathname: "/case/[id]", params: { id } });
+  assert.deepEqual(appRoute(`/check/${id}`), { pathname: "/case/[id]", params: { id } });
   assert.deepEqual(appRoute(`/verifier/${id}`), { pathname: "/case/[id]", params: { id } });
 });
 
@@ -17,7 +18,9 @@ test("les formulaires pré-remplis gardent leur texte", () => {
 });
 
 test("le sceau d'une carte ouvre l'onglet Sceau du scan", () => {
-  assert.deepEqual(appRoute("https://vyra.mg/verifier/sceau?c=x&s=y"), { pathname: "/scan", params: { onglet: "sceau", c: "x", s: "y" } });
+  assert.deepEqual(appRoute("https://vyra.mg/check/seal?c=x&s=y"), { pathname: "/scan", params: { tab: "seal", c: "x", s: "y" } });
+  // Les QR des cartes imprimées avant le passage en anglais.
+  assert.deepEqual(appRoute("https://vyra.mg/verifier/sceau?c=x&s=y"), { pathname: "/scan", params: { tab: "seal", c: "x", s: "y" } });
 });
 
 test("le tribunal et le jeu restent sur le site", () => {

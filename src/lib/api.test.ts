@@ -18,13 +18,13 @@ test("readError survives a body that is not JSON", () => {
 
 test("caseIdFrom finds the case id in every link shape", () => {
   const id = "00000000-0000-4000-8000-000000000001";
-  for (const href of [`/court/${id}`, `/cases/${id}`, `/verifier/${id}`]) assert.equal(caseIdFrom(href), id);
+  for (const href of [`/court/${id}`, `/cases/${id}`, `/check/${id}`, `/verifier/${id}`]) assert.equal(caseIdFrom(href), id);
   assert.equal(caseIdFrom("/feed"), null);
 });
 
 test("sealQuery reads the QR link or the typed code", () => {
   const id = "00000000-0000-4000-8000-000000000002";
-  assert.equal(sealQuery(`http://localhost:3000/verifier/sceau?c=${id}&s=ab%2Bc_d-e`), `c=${id}&s=ab%2Bc_d-e`);
+  assert.equal(sealQuery(`http://localhost:3000/check/seal?c=${id}&s=ab%2Bc_d-e`), `c=${id}&s=ab%2Bc_d-e`);
   assert.equal(sealQuery("  vy-tkhk-vexf "), "code=vy-tkhk-vexf");
   assert.equal(sealQuery("   "), null);
 });
