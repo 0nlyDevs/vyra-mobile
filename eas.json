@@ -11,14 +11,14 @@
       },
       "env": {
         "EXPO_PUBLIC_WEB_URL": "https://vyra-mg.vercel.app",
-        "EXPO_PUBLIC_API_URL": "https://vyra-api.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://vyra-mg.vercel.app"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_WEB_URL": "https://vyra-mg.vercel.app",
-        "EXPO_PUBLIC_API_URL": "https://vyra-api.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://vyra-mg.vercel.app"
       }
     }
   }
