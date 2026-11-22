@@ -7,13 +7,16 @@ Expo (React Native), Expo Router. Elle lit l'API du site (`/api/v1`, voir `docs/
 
 | Onglet | Rôle |
 |---|---|
-| Fil | le fil d'actualité (Madagascar ou monde), avec l'état de vérification de chaque publication |
-| Affaires | les affaires ; le dossier montre la conclusion, son sceau (code et QR à partager), What If ?, les versions retrouvées, les pièces |
-| Vérifier | cinq examens : un texte ou un lien (affaire déjà jugée, signes d'alerte, vérifications publiées), une image (déjà vue, copie protégée, lecture par l'IA), une vidéo (images clés protégées, bande son transcrite), « Est-ce bien eux ? » (le message comparé à l'annuaire officiel), un sceau reçu |
-| Assistant | des questions, des réponses qui citent les affaires jugées |
-| Compte | le profil, le mode Sans IA, l'annuaire officiel (modifiable par un vérificateur), le serveur, se déconnecter |
+| Fil | le fil d'actualité rangé par le site (Madagascar ou monde), avec l'état de vérification de chaque publication |
+| Enquêtes | les affaires et le formulaire « Nouvelle analyse » ; le dossier suit l'ordre de la page du site : conclusion, sceau (code et QR à partager), What If ?, recherche web, « Déjà vérifiée ailleurs ? », versions retrouvées, pièces |
+| Scan | sept onglets : image, vidéo, vocal, lien, texte, « Est-ce bien eux ? » (le message comparé à l’annuaire officiel), sceau reçu |
+| Alertes | signaler un contenu, suivre ses signalements ; une vue pour les vérificateurs |
+| Compte | le profil et son rôle, les réglages de lecture du site (thème, taille du texte, mode éco, Sans IA), l'annuaire officiel, se déconnecter |
 
-La connexion se fait avec l'e-mail et le mot de passe du site ; le jeton est gardé sur le téléphone
+L'assistant est un bouton flottant, présent sur les onglets, le dossier d'une affaire et l'annuaire :
+il répond en citant les affaires jugées. Le tribunal et les jeux restent sur le site.
+
+La connexion se fait avec l'e-mail et le mot de passe du site (inscription, mot de passe oublié et comptes de démo compris) ; le jeton est gardé sur le téléphone
 (`src/lib/session.tsx`).
 
 Comme sur le site, ce que l'IA a lu ou rédigé est encadré en pointillés (`src/ui/ai-reading.tsx`) ;
@@ -51,7 +54,3 @@ npx expo lint
 ```
 
 Le design est « encre et papier » : l’encre est l’action, la couleur réservée aux verdicts (toujours avec une icône et un mot). Couleurs dans `src/lib/tokens.ts`, composants dans `src/ui/ui.tsx`, en-tête dans `src/components/app-header.tsx`.
-
-## Pas encore
-
-Scan d'un vocal seul, tribunal (audience et vote), alertes, jeu : l'API du site ne les expose pas encore.
