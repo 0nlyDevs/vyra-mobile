@@ -44,3 +44,4 @@ example
 
 # local native modules build output
 modules/*/android/build/
+e2e/resultats/
