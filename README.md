@@ -26,6 +26,16 @@ EXPO_PUBLIC_API_URL=http://<adresse du site Vyra> npx expo start
 `EXPO_PUBLIC_API_URL` : l'adresse du site (par défaut `http://localhost:3000`). Sur un téléphone
 Android branché à l'ordinateur : `adb reverse tcp:3000 tcp:3000`.
 
+## Aperçu dans le navigateur
+
+```bash
+npx expo start --web
+```
+
+Puis http://localhost:8081 (le premier chargement construit le bundle : environ une minute). L'API du site
+doit autoriser le navigateur (CORS, déjà fait dans `vyra/web/next.config.ts`). Sur le web, la session est
+gardée dans `localStorage` (`src/lib/kv.web.ts`).
+
 ## Vérifier
 
 ```bash
