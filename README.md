@@ -44,7 +44,7 @@ npm test
 npx expo lint
 ```
 
-Le thème est dans `src/lib/tokens.ts` (encre, papier, accent rouge).
+Le design est « encre et papier » : l’encre est l’action, la couleur réservée aux verdicts (toujours avec une icône et un mot). Couleurs dans `src/lib/tokens.ts`, composants dans `src/ui/ui.tsx`, en-tête dans `src/components/app-header.tsx`.
 
 ## Pas encore
 
