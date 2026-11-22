@@ -7,8 +7,10 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { AppHeader } from "@/components/app-header";
 import { SessionProvider, useSession } from "@/lib/session";
 import { useTheme } from "@/lib/theme";
+import { AppChromeContext } from "@/ui/ui";
 
 SplashScreen.preventAutoHideAsync().catch(() => null);
 
@@ -42,15 +44,18 @@ function Routes() {
   return (
     <>
       <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.background } }}>
-        <Stack.Protected guard={status === "in"}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="case/[id]" />
-        </Stack.Protected>
-        <Stack.Protected guard={status === "out"}>
-          <Stack.Screen name="sign-in" />
-        </Stack.Protected>
-      </Stack>
+      {/* Connecté : l'en-tête fixe de Checky au-dessus de chaque écran (il prend la zone sûre du haut). */}
+      <AppChromeContext value={status === "in"}>
+        <Stack screenOptions={{ headerShown: status === "in", header: () => <AppHeader />, contentStyle: { backgroundColor: c.background } }}>
+          <Stack.Protected guard={status === "in"}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="case/[id]" />
+          </Stack.Protected>
+          <Stack.Protected guard={status === "out"}>
+            <Stack.Screen name="sign-in" />
+          </Stack.Protected>
+        </Stack>
+      </AppChromeContext>
     </>
   );
 }

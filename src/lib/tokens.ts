@@ -1,4 +1,4 @@
-// Vyra tokens : encre et papier, avec le rouge de la marque en couleur principale. Pure data and maths: no react-native import, so it runs under `node --test`.
+// Vyra tokens : encre et papier, comme Checky ; la couleur est réservée aux verdicts. Pure data and maths: no react-native import, so it runs under `node --test`.
 // Verdict type is repeated here for the same reason.
 type VerdictKey = "true" | "misleading" | "false" | "unverifiable";
 export type VerdictTone = { fill: string; on: string; soft: string; ink: string };
@@ -33,9 +33,9 @@ export const light: Palette = {
   foreground: "#0a0a0b",
   card: "#fbfaf7",
   raised: "#e9e8e2",
-  primary: "#d93a30",
-  primaryForeground: "#ffffff",
-  primaryPressed: "#b82d24",
+  primary: "#0a0a0b",
+  primaryForeground: "#f3f2ee",
+  primaryPressed: "#1f1f22",
   muted: "#e9e8e2",
   mutedForeground: "#55544e",
   accent: "#e2e1da",
@@ -61,9 +61,9 @@ export const dark: Palette = {
   foreground: "#f3f2ee",
   card: "#111113",
   raised: "#19191c",
-  primary: "#ff5448",
+  primary: "#f3f2ee",
   primaryForeground: "#0a0a0b",
-  primaryPressed: "#e8453a",
+  primaryPressed: "#e2e1da",
   muted: "#19191c",
   mutedForeground: "#a6a5a0",
   accent: "#232327",
