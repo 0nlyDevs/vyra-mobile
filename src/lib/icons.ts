@@ -60,6 +60,11 @@ import {
   Waveform as PWaveform,
   X as PX,
   XCircle as PXCircle,
+  EyeSlash as PEyeSlash,
+  Money as PMoney,
+  ShieldWarning as PShieldWarning,
+  FilmStrip as PFilmStrip,
+  Buildings as PBuildings,
   type IconProps,
 } from "phosphor-react-native";
 
@@ -131,3 +136,8 @@ export const Stop = duo(PStop);
 export const Microphone = duo(PMicrophone);
 export const MapPin = duo(PMapPin);
 export const Trash = duo(PTrash);
+export const EyeSlash = duo(PEyeSlash);
+export const Money = duo(PMoney);
+export const ShieldWarning = duo(PShieldWarning);
+export const FilmStrip = duo(PFilmStrip);
+export const Buildings = duo(PBuildings);

@@ -8,13 +8,18 @@ Expo (React Native), Expo Router. Elle lit l'API du site (`/api/v1`, voir `docs/
 | Onglet | Rôle |
 |---|---|
 | Fil | le fil d'actualité (Madagascar ou monde), avec l'état de vérification de chaque publication |
-| Affaires | les affaires ; le dossier montre la conclusion, What If ?, les versions retrouvées, les pièces |
-| Vérifier | un texte ou un lien reçu : affaire déjà jugée, signes d'alerte, vérifications publiées |
+| Affaires | les affaires ; le dossier montre la conclusion, son sceau (code et QR à partager), What If ?, les versions retrouvées, les pièces |
+| Vérifier | cinq examens : un texte ou un lien (affaire déjà jugée, signes d'alerte, vérifications publiées), une image (déjà vue, copie protégée, lecture par l'IA), une vidéo (images clés protégées, bande son transcrite), « Est-ce bien eux ? » (le message comparé à l'annuaire officiel), un sceau reçu |
 | Assistant | des questions, des réponses qui citent les affaires jugées |
-| Compte | le profil, le serveur, se déconnecter |
+| Compte | le profil, le mode Sans IA, l'annuaire officiel (modifiable par un vérificateur), le serveur, se déconnecter |
 
 La connexion se fait avec l'e-mail et le mot de passe du site ; le jeton est gardé sur le téléphone
 (`src/lib/session.tsx`).
+
+Comme sur le site, ce que l'IA a lu ou rédigé est encadré en pointillés (`src/ui/ai-reading.tsx`) ;
+les faits gardent un trait plein. Le mode Sans IA (écran Compte) masque ces blocs partout.
+Les photos et vidéos se choisissent avec `expo-image-picker` ; la copie protégée et les images
+clés se partagent avec `expo-sharing` ; le QR du sceau est dessiné avec `qrcode`.
 
 ## Lancer
 
@@ -49,4 +54,4 @@ Le design est « encre et papier » : l’encre est l’action, la couleur rése
 
 ## Pas encore
 
-Scan d'image ou de son, tribunal (audience et vote), alertes, jeu : l'API du site ne les expose pas encore.
+Scan d'un vocal seul, tribunal (audience et vote), alertes, jeu : l'API du site ne les expose pas encore.

@@ -43,7 +43,16 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Vyra ouvre la photo ou la vidéo que vous choisissez pour l’examiner.",
+          "cameraPermission": "Vyra utilise l’appareil photo quand vous photographiez une image à examiner.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
