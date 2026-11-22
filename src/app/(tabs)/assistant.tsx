@@ -1,14 +1,15 @@
 import { useRouter } from "expo-router";
 import { type ComponentRef, useRef, useState } from "react";
-import { KeyboardAvoidingView, ScrollView, View } from "react-native";
+import { KeyboardAvoidingView, Linking, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { type Answer, ApiError, caseIdFrom, post } from "@/lib/api";
+import { API_URL } from "@/lib/config";
 import { PaperPlaneTilt } from "@/lib/icons";
 import { fonts, radius, useTheme } from "@/lib/theme";
 import { Button, CertaintyBadge, Field, Notice, PressCard, T, useAppChrome } from "@/ui/ui";
 
-type Message = { role: "user" | "assistant"; text: string; citations?: Answer["citations"] };
+type Message = { role: "user" | "assistant"; text: string; citations?: Answer["citations"]; proposals?: Answer["proposals"] };
 
 /** L'assistant : il répond avec les affaires jugées de Vyra et les cite ; sans preuve, il le dit. */
 export default function Assistant() {
@@ -31,7 +32,7 @@ export default function Assistant() {
     setError(null);
     try {
       const answer = await post<Answer>("/assistant", { question, pathname: "/", history });
-      setMessages((all) => [...all, { role: "assistant", text: answer.answer, citations: answer.citations }]);
+      setMessages((all) => [...all, { role: "assistant", text: answer.answer, citations: answer.citations, proposals: answer.proposals }]);
     } catch (e) {
       setError((e as ApiError).message);
     } finally {
@@ -75,6 +76,12 @@ export default function Assistant() {
                     <CertaintyBadge level={citation.certainty} />
                   </PressCard>
                 );
+              })}
+              {message.proposals?.map((proposal) => {
+                const id = proposal.href.startsWith("/court/") || proposal.href.startsWith("/cases/") ? caseIdFrom(proposal.href) : null;
+                // Une affaire s'ouvre dans l'application ; le reste (enquête, signalement) sur le site.
+                const open = () => (id ? router.push({ pathname: "/case/[id]", params: { id } }) : Linking.openURL(`${API_URL}${proposal.href}`));
+                return <Button key={proposal.href} label={proposal.label} variant="outline" onPress={open} />;
               })}
             </View>
           ))}
