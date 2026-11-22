@@ -91,6 +91,8 @@ export type WhatIf = {
 export type Answer = {
   answer: string;
   citations: { number: number; title: string; href: string; certainty: Certainty | null }[];
+  /** Actions que l'assistant propose : la personne les confirme d'un toucher, il n'exécute rien. */
+  proposals?: { type: string; label: string; href: string }[];
   source: "gemini" | "fallback";
 };
 
