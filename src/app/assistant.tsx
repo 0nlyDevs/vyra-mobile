@@ -1,14 +1,21 @@
-import { useRouter } from "expo-router";
+import { type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { type ComponentRef, useRef, useState } from "react";
 import { KeyboardAvoidingView, Linking, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { type Answer, ApiError, caseIdFrom, post } from "@/lib/api";
+import { type Answer, ApiError, post } from "@/lib/api";
 import { API_URL } from "@/lib/config";
 import { EyeSlash, PaperPlaneTilt } from "@/lib/icons";
 import { useNoAi } from "@/lib/no-ai";
+import { appRoute } from "@/lib/site-links";
 import { fonts, radius, useTheme } from "@/lib/theme";
 import { Button, CertaintyBadge, Field, Notice, PressCard, T, useAppChrome } from "@/ui/ui";
+
+/** L'écran d'où l'assistant a été ouvert, dit comme un chemin du site (le contexte de la question). */
+function sitePath(from: string | undefined): string {
+  if (!from || from === "/") return "/feed";
+  return from.replace(/^\/case\//, "/cases/");
+}
 
 type Message = { role: "user" | "assistant"; text: string; citations?: Answer["citations"]; proposals?: Answer["proposals"] };
 
@@ -17,7 +24,19 @@ export default function Assistant() {
   const c = useTheme();
   const chrome = useAppChrome();
   const router = useRouter();
+  const { from } = useLocalSearchParams<{ from?: string }>();
   const { noAi } = useNoAi();
+  // Un chemin du site (affaire, signalement, enquête pré-remplie) s'ouvre sur son écran de
+  // l'application ; seul ce qui n'existe que sur le site s'ouvre dans le navigateur.
+  const openHref = (href: string) => {
+    const route = appRoute(href);
+    if (!route) {
+      Linking.openURL(`${API_URL}${href}`).catch(() => null);
+      return;
+    }
+    router.dismiss();
+    router.navigate(route as Href);
+  };
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -33,7 +52,7 @@ export default function Assistant() {
     setBusy(true);
     setError(null);
     try {
-      const answer = await post<Answer>("/assistant", { question, pathname: "/", history });
+      const answer = await post<Answer>("/assistant", { question, pathname: sitePath(from), history });
       setMessages((all) => [...all, { role: "assistant", text: answer.answer, citations: answer.citations, proposals: answer.proposals }]);
     } catch (e) {
       setError((e as ApiError).message);
@@ -79,24 +98,18 @@ export default function Assistant() {
                   <T style={{ color: message.role === "user" ? c.primaryForeground : c.foreground }}>{message.text}</T>
                 )}
               </View>
-              {message.citations?.map((citation) => {
-                const id = caseIdFrom(citation.href);
-                return (
-                  <PressCard key={citation.number} disabled={!id} accessibilityHint="Ouvre l’affaire citée" style={{ padding: 12, gap: 8 }} onPress={() => id && router.push({ pathname: "/case/[id]", params: { id } })}>
-                    <T tone="tabular" style={{ fontSize: 12, color: c.mutedForeground }}>
-                      [{citation.number}] Affaire citée
-                    </T>
-                    <T style={{ fontFamily: fonts.semibold }}>{citation.title}</T>
-                    <CertaintyBadge level={citation.certainty} />
-                  </PressCard>
-                );
-              })}
-              {message.proposals?.map((proposal) => {
-                const id = proposal.href.startsWith("/court/") || proposal.href.startsWith("/cases/") ? caseIdFrom(proposal.href) : null;
-                // Une affaire s'ouvre dans l'application ; le reste (enquête, signalement) sur le site.
-                const open = () => (id ? router.push({ pathname: "/case/[id]", params: { id } }) : Linking.openURL(`${API_URL}${proposal.href}`));
-                return <Button key={proposal.href} label={proposal.label} variant="outline" onPress={open} />;
-              })}
+              {message.citations?.map((citation) => (
+                <PressCard key={citation.number} disabled={!appRoute(citation.href)} accessibilityHint="Ouvre l’affaire citée" style={{ padding: 12, gap: 8 }} onPress={() => openHref(citation.href)}>
+                  <T tone="tabular" style={{ fontSize: 12, color: c.mutedForeground }}>
+                    [{citation.number}] Affaire citée
+                  </T>
+                  <T style={{ fontFamily: fonts.semibold }}>{citation.title}</T>
+                  <CertaintyBadge level={citation.certainty} />
+                </PressCard>
+              ))}
+              {message.proposals?.map((proposal) => (
+                <Button key={proposal.href} label={proposal.label} variant="outline" onPress={() => openHref(proposal.href)} />
+              ))}
             </View>
           ))}
           {error && <Notice tone="error">{error}</Notice>}

@@ -3,8 +3,8 @@ import { type ReactNode, useState } from "react";
 import { Image, Linking, Platform, Pressable, View } from "react-native";
 
 import { AI_SOURCE_LABELS, ApiError, type CaseSummary, type PickedFile, post, SCAN_OUTCOME_DESCRIPTIONS, SCAN_OUTCOME_LABELS, type ScanOutcome } from "@/lib/api";
-import { demoFile, MAX_FILE_BYTES, pickMedia } from "@/lib/files";
-import { ArrowSquareOut, Camera, CheckCircle, type Icon, Images, Paperclip } from "@/lib/icons";
+import { demoFile, MAX_FILE_BYTES, pickAudio, pickMedia } from "@/lib/files";
+import { ArrowSquareOut, Camera, CheckCircle, type Icon, Images, Paperclip, Waveform } from "@/lib/icons";
 import { fonts, radius, useTheme } from "@/lib/theme";
 import { useApi } from "@/lib/use-api";
 import { Button, Card, Chip, Notice, T, ToneTag, styles } from "@/ui/ui";
@@ -55,7 +55,7 @@ export function SourceNote({ source }: { source: string | null }) {
   if (!source) return null;
   return (
     <T tone="muted" style={{ fontSize: 13 }}>
-      {AI_SOURCE_LABELS[source] ?? source}
+      {source in AI_SOURCE_LABELS ? AI_SOURCE_LABELS[source as keyof typeof AI_SOURCE_LABELS] : source}
     </T>
   );
 }
@@ -89,14 +89,22 @@ export function ReverseSearch() {
 
 type Demo = { label: string; path: string; type: string };
 
+const PICK_LABELS = { images: "Choisir une photo", videos: "Choisir une vidéo", audio: "Choisir un vocal" } as const;
+// Les mêmes formats que le site.
+const FORMATS = {
+  images: "JPEG, PNG ou WebP, 8 Mo au plus.",
+  videos: "MP4, MOV, WebM ou 3GP, 8 Mo au plus.",
+  audio: "WAV, MP3, OGG ou M4A, 8 Mo au plus.",
+} as const;
+
 /** Choisir le fichier : la galerie, l'appareil photo (image, sur téléphone), ou une démo du site. */
-export function FilePicker({ kind, busy, demos, onFile }: { kind: "images" | "videos"; busy: boolean; demos: Demo[]; onFile: (file: PickedFile) => void }) {
+export function FilePicker({ kind, busy, demos, onFile }: { kind: "images" | "videos" | "audio"; busy: boolean; demos: Demo[]; onFile: (file: PickedFile) => void }) {
   const [error, setError] = useState<string | null>(null);
 
   async function choose(camera: boolean) {
     setError(null);
     try {
-      const picked = await pickMedia(kind, camera);
+      const picked = kind === "audio" ? await pickAudio() : await pickMedia(kind, camera);
       if (!picked) return;
       if (picked.size && picked.size > MAX_FILE_BYTES) {
         setError("Fichier trop lourd : 8 Mo au plus.");
@@ -119,9 +127,9 @@ export function FilePicker({ kind, busy, demos, onFile }: { kind: "images" | "vi
 
   return (
     <View style={{ gap: 12 }}>
-      <Button label={kind === "images" ? "Choisir une photo" : "Choisir une vidéo"} icon={kind === "images" ? Images : Paperclip} busy={busy} onPress={() => choose(false)} />
+      <Button label={PICK_LABELS[kind]} icon={kind === "images" ? Images : kind === "audio" ? Waveform : Paperclip} busy={busy} onPress={() => choose(false)} />
       {kind === "images" && Platform.OS !== "web" && <Button label="Prendre une photo" icon={Camera} variant="outline" disabled={busy} onPress={() => choose(true)} />}
-      <T tone="muted">{kind === "images" ? "JPEG, PNG ou WebP, 8 Mo au plus." : "MP4, MOV, WebM ou 3GP, 8 Mo au plus."}</T>
+      <T tone="muted">{FORMATS[kind]}</T>
       <View style={{ gap: 8 }}>
         <T style={{ fontFamily: fonts.medium, fontSize: 15 }}>Essayer avec :</T>
         <View style={styles.wrap}>

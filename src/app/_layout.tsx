@@ -8,9 +8,9 @@ import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AppHeader } from "@/components/app-header";
-import { NoAiProvider } from "@/lib/no-ai";
+import { PreferencesProvider } from "@/lib/preferences";
 import { SessionProvider, useSession } from "@/lib/session";
-import { useTheme } from "@/lib/theme";
+import { useIsDark, useTheme } from "@/lib/theme";
 import { AppChromeContext } from "@/ui/ui";
 
 SplashScreen.preventAutoHideAsync().catch(() => null);
@@ -28,9 +28,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SessionProvider>
-        <NoAiProvider>
+        <PreferencesProvider>
           <Routes />
-        </NoAiProvider>
+        </PreferencesProvider>
       </SessionProvider>
     </SafeAreaProvider>
   );
@@ -40,13 +40,14 @@ export default function RootLayout() {
 function Routes() {
   const { status } = useSession();
   const c = useTheme();
+  const dark = useIsDark();
   useEffect(() => {
     if (status !== "loading") SplashScreen.hideAsync().catch(() => null);
   }, [status]);
   if (status === "loading") return null;
   return (
     <>
-      <StatusBar style="auto" />
+      <StatusBar style={dark ? "light" : "dark"} />
       {/* Connecté : l'en-tête fixe au-dessus de chaque écran (il prend la zone sûre du haut). */}
       <AppChromeContext value={status === "in"}>
         <Stack screenOptions={{ headerShown: status === "in", header: () => <AppHeader />, contentStyle: { backgroundColor: c.background } }}>
@@ -54,6 +55,8 @@ function Routes() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="case/[id]" />
             <Stack.Screen name="directory" />
+            {/* L'assistant s'ouvre par-dessus l'écran en cours, comme le panneau du site. */}
+            <Stack.Screen name="assistant" options={{ presentation: "modal" }} />
           </Stack.Protected>
           <Stack.Protected guard={status === "out"}>
             <Stack.Screen name="sign-in" />

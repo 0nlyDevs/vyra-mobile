@@ -1,12 +1,20 @@
 import { useColorScheme } from "react-native";
 
+import { usePreferences } from "@/lib/preferences";
 import { dark, light, type Palette } from "@/lib/tokens";
 
-// Vyra tokens live in tokens.ts (pure, tested); this file only picks the palette for the system scheme.
+// Vyra tokens live in tokens.ts (pure, tested); this file only picks the palette: the theme chosen
+// in Compte (Clair, Sombre), or the system scheme (« Comme l'appareil », the default, like the site).
 export type Theme = Palette;
 
+export function useIsDark(): boolean {
+  const system = useColorScheme();
+  const { theme } = usePreferences();
+  return theme === "system" ? system === "dark" : theme === "dark";
+}
+
 export function useTheme(): Theme {
-  return useColorScheme() === "dark" ? dark : light;
+  return useIsDark() ? dark : light;
 }
 
 export const fonts = {

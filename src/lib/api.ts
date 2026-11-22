@@ -68,9 +68,15 @@ export type Login = { token: string; expiresAt: string; profile: Profile };
 
 export type Certainty = "established" | "probable" | "uncertain" | "contradicted" | "insufficient";
 
+export type FeedStatus = "unverified" | "reported" | "verifying" | "concluded";
+export type FeedView = "all" | "local" | "world" | "unofficial" | "checked";
+export type FeedTopic = { id: string; label: string; sources: number };
+
 export type FeedItem = {
   id: string;
   url: string;
+  kind: "press" | "tv" | "facebook" | "social" | "trend" | "factcheck";
+  region: "mg" | "world";
   sourceName: string;
   author: string | null;
   title: string | null;
@@ -79,6 +85,25 @@ export type FeedItem = {
   publishedAt: string;
   case: { id: string; status: string; certainty: Certainty | null; conclusion: string | null } | null;
   reporterCount: number;
+  /** L'état de vérification, calculé par le site comme sur /feed. */
+  status?: FeedStatus;
+  /** Le sujet repris par plusieurs sources dont la publication fait partie. */
+  topic?: FeedTopic | null;
+};
+
+/** Le fil rangé comme la page /feed du site : la une, trois histoires, le reste. */
+export type Feed = {
+  region: "mg" | "world";
+  view: FeedView;
+  views: FeedView[];
+  focus: FeedTopic | null;
+  lead: FeedItem | null;
+  sides: FeedItem[];
+  rest: FeedItem[];
+  items: FeedItem[];
+  topics: FeedTopic[];
+  trends: FeedItem[];
+  empty: boolean;
 };
 
 export type CaseSummary = {
@@ -94,19 +119,45 @@ export type CaseSummary = {
   imageUrl?: string | null;
 };
 
+export type SourceKind = keyof typeof import("@/lib/domain").SOURCE_KIND_LABELS;
+export type ChangeType = keyof typeof import("@/lib/domain").CHANGE_TYPE_LABELS;
+export type Signal = { label: string; tone: string; signs: { label: string; quote: string }[] };
+
 export type CaseFile = CaseSummary & {
-  versions: { id: string; position: number; content: string; sourceName: string; publishedAt: string | null; imagePath?: string | null }[];
+  versions: {
+    id: string;
+    position: number;
+    content: string;
+    sourceName: string;
+    sourceUrl: string | null;
+    publishedAt: string | null;
+    imagePath?: string | null;
+    sourceKind?: SourceKind;
+  }[];
+  links: { id: string; fromVersionId: string; toVersionId: string; changeType: ChangeType; note: string; confidence: string }[];
   evidence: {
     id: string;
     number: number;
     title: string;
     content: string;
     sourceName: string;
+    sourceUrl: string | null;
     publishedAt: string | null;
     stance: "supports" | "contradicts" | "context";
-    strength: string;
+    strength: "solid" | "weak";
+    sourceKind?: SourceKind;
   }[];
+  /** Les signes d'alerte de l'information, relevés sans IA. */
+  signals?: Signal[];
 };
+
+/** Nouvelle analyse : l'affaire retrouvée (et comment) ou créée. */
+export type Opened = { caseId: string; matchedBy: "ai" | "meaning" | "words" | null; reason: string | null };
+
+export type WebSearchResult = { status: "found" | "nothing_found" | "prepared"; kept: number; contradicting: number };
+export type FactCheck = { url: string; title: string; publisher: string; rating: string | null; claim: string | null; excerpt: string; published_at: string | null };
+export type WikipediaArticle = { url: string; title: string; language: string; summary: string };
+export type FactChecks = { factChecks: FactCheck[]; wikipedia: WikipediaArticle[]; searched: boolean };
 
 export type WhatIf = {
   kind: "real" | "fictional";
@@ -125,18 +176,58 @@ export type Answer = {
 
 export type Check = {
   text: string;
-  judged: { url: string; title: string; label: string; tone: string; conclusion: string | null } | null;
-  signals: { label: string; tone: string; signs: { label: string; quote: string }[] }[];
-  factChecks: { title?: string; publisher?: string; url?: string; rating?: string }[];
+  judged: { id?: string; url: string; title: string; certainty?: Certainty; label: string; tone: string; conclusion: string | null } | null;
+  signals: Signal[];
+  factChecks: { title?: string; publisher?: string; url?: string; rating?: string | null }[];
 };
 
-export const CERTAINTY_LABELS: Record<Certainty, string> = {
-  established: "Établi",
-  probable: "Probable",
-  uncertain: "Incertain",
-  contradicted: "Contredit",
-  insufficient: "Informations insuffisantes",
+// ---------- Alertes ----------
+
+export type ReportState = "received" | "grouped" | "verifying" | "concluded";
+export type ReportReasonKey = import("@/lib/domain").ReportReason;
+export type MyReport = {
+  id: string;
+  content: string;
+  url: string | null;
+  reason: ReportReasonKey;
+  createdAt: string;
+  groupTitle: string;
+  caseId: string | null;
+  reporterCount: number;
+  state: ReportState;
 };
+export type ReportGroup = {
+  id: string;
+  title: string;
+  summary: string | null;
+  caseId: string | null;
+  reporterCount: number;
+  state: ReportState;
+  reports: { id: string; content: string; url: string | null; reason: ReportReasonKey; description: string | null; createdAt: string; reporterName: string | null }[];
+};
+export type Reports = { mine: MyReport[]; groups: ReportGroup[]; isVerifier: boolean };
+export type ReportOutcome = { reporterCount: number; caseId: string | null };
+
+// ---------- Scan d'un lien ----------
+
+export type LinkView = {
+  url: string;
+  site: string;
+  title: string;
+  publishedAt: string | null;
+  daysOld: number | null;
+  text: string;
+  claims: string[];
+  mainClaim: string;
+  needsText: boolean;
+  aiSource: "gemini" | "fallback";
+  factChecks: FactCheck[];
+  searched: boolean;
+};
+
+export type DemoProfile = { id: string; name: string; role: string; headline: string };
+
+export { AI_SOURCE_LABELS, CERTAINTY_LABELS, SCAN_OUTCOME_DESCRIPTIONS, SCAN_OUTCOME_LABELS } from "@/lib/domain";
 
 
 // ---------- Sceau de la conclusion ----------
@@ -199,21 +290,4 @@ export type ScanView = {
   judged?: { id: string; title: string; certainty: Certainty | null } | null;
   safeCopy?: { dataUrl: string; facesBlurred: number; metadataRemoved: boolean; firstFrameOnly: boolean } | null;
   frames?: { second: number; dataUrl: string; facesBlurred: number }[];
-};
-
-/** Les mêmes mots que le site (SCAN_OUTCOME_LABELS de web/src/lib/domain.ts). */
-export const SCAN_OUTCOME_LABELS: Record<ScanOutcome, string> = {
-  ai_signature: "Signature IA trouvée",
-  clues: "Des indices, sans certitude",
-  no_clue: "Aucun indice, ce qui ne prouve rien",
-};
-export const SCAN_OUTCOME_DESCRIPTIONS: Record<ScanOutcome, string> = {
-  ai_signature: "Le fichier déclare lui-même avoir été produit par un outil d’IA.",
-  clues: "Des éléments méritent une vérification. Aucun ne suffit à conclure seul.",
-  no_clue: "Rien de suspect n’a été relevé. Une image peut pourtant être authentique et sortie de son contexte.",
-};
-
-export const AI_SOURCE_LABELS: Record<string, string> = {
-  gemini: "Réponse de l’IA",
-  fallback: "Réponse préparée (hors ligne)",
 };
