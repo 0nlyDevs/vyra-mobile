@@ -48,6 +48,7 @@ import {
   Scan as PScan,
   SealCheck as PSealCheck,
   ShareNetwork as PShareNetwork,
+  SignOut as PSignOut,
   Sparkle as PSparkle,
   Square as PSquare,
   TextT as PTextT,
@@ -110,6 +111,7 @@ export const Question = duo(PQuestion);
 export const Scan = duo(PScan);
 export const SealCheck = duo(PSealCheck);
 export const ShareNetwork = duo(PShareNetwork);
+export const SignOut = duo(PSignOut);
 export const Sparkle = duo(PSparkle);
 export const Square = duo(PSquare);
 export const TextT = duo(PTextT);

@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { View } from "react-native";
 
+import { Brand } from "@/components/brand";
 import { type ApiError } from "@/lib/api";
-import { fonts, tracking } from "@/lib/theme";
 import { useSession } from "@/lib/session";
 import { Button, Field, Notice, Screen, T } from "@/ui/ui";
 
+/** La connexion, comme chez Checky : la marque, le titre, puis l'e-mail et le mot de passe du site. */
 export default function SignIn() {
   const { signIn } = useSession();
   const [email, setEmail] = useState("");
@@ -27,14 +28,17 @@ export default function SignIn() {
 
   return (
     <Screen>
-      <View style={{ gap: 6, marginTop: 40, marginBottom: 12 }}>
-        <T style={{ fontFamily: fonts.display, fontSize: 56, lineHeight: 60, letterSpacing: tracking(56) }}>VYRA</T>
-        <T tone="muted">Voir d’où vient une information, et la faire juger sur pièces.</T>
+      <View style={{ gap: 20, paddingTop: 32 }}>
+        <Brand />
+        <View style={{ gap: 6 }}>
+          <T tone="title">Se connecter</T>
+          <T tone="muted">Voir d’où vient une information, et la faire juger sur pièces. Avec l’e-mail et le mot de passe du site.</T>
+        </View>
       </View>
-      {error && <Notice tone="error">{error}</Notice>}
       <Field label="Adresse e-mail" value={email} onChangeText={setEmail} autoCapitalize="none" autoComplete="email" keyboardType="email-address" textContentType="emailAddress" />
-      <Field label="Mot de passe" value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" textContentType="password" onSubmitEditing={submit} />
-      <Button label="Se connecter" busy={busy} disabled={!email.trim() || password.length < 1} onPress={submit} />
+      <Field label="Mot de passe" value={password} onChangeText={setPassword} secureTextEntry autoComplete="current-password" textContentType="password" onSubmitEditing={submit} />
+      {error && <Notice tone="error">{error}</Notice>}
+      <Button label={busy ? "Connexion…" : "Se connecter"} busy={busy} disabled={!email.trim() || password.length < 1} onPress={submit} />
     </Screen>
   );
 }
