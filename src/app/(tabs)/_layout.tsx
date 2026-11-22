@@ -1,30 +1,27 @@
 import { Tabs } from "expo-router/js-tabs";
-import { ChatTeardropText, Gear, ListChecks, Newspaper, Scan } from "@/lib/icons";
 import { type ColorValue, View } from "react-native";
 
 import { InkTabBar } from "@/components/tab-bar";
-import { useT } from "@/lib/i18n";
+import { ChatTeardropText, Gear, ListChecks, Newspaper, Scan } from "@/lib/icons";
 import { useTheme } from "@/lib/theme";
 
-/** The desk's bottom bar; the fixed header keeps the menu and assistant outside the scroll area. */
+type TabIcon = typeof Scan;
+
+/** La barre du bas : le fil, les affaires, la vérification rapide, l'assistant, le compte. */
 export default function TabsLayout() {
-  const t = useT();
   const c = useTheme();
   const icon =
-    (Icon: typeof Scan) =>
-    // eslint-disable-next-line react/display-name -- a render prop for one tab, not a component
+    (Icon: TabIcon) =>
+    // eslint-disable-next-line react/display-name -- une fonction de rendu pour un onglet, pas un composant
     ({ color }: { color: ColorValue }) => <Icon size={22} color={String(color)} />;
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
-      <Tabs
-        tabBar={(props) => <InkTabBar {...props} />}
-        screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: c.background } }}
-      >
-        <Tabs.Screen name="index" options={{ title: t.tabs.analyse, tabBarIcon: icon(Scan) }} />
-        <Tabs.Screen name="beat" options={{ title: t.rubrique.tab, tabBarIcon: icon(Newspaper) }} />
-        <Tabs.Screen name="claims" options={{ title: t.tabs.claims, tabBarIcon: icon(ListChecks) }} />
-        <Tabs.Screen name="verify" options={{ title: t.tabs.ask, tabBarIcon: icon(ChatTeardropText) }} />
-        <Tabs.Screen name="settings" options={{ title: t.tabs.settings, tabBarIcon: icon(Gear) }} />
+      <Tabs tabBar={(props) => <InkTabBar {...props} />} screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: c.background } }}>
+        <Tabs.Screen name="index" options={{ title: "Fil", tabBarIcon: icon(Newspaper) }} />
+        <Tabs.Screen name="cases" options={{ title: "Affaires", tabBarIcon: icon(ListChecks) }} />
+        <Tabs.Screen name="check" options={{ title: "Vérifier", tabBarIcon: icon(Scan) }} />
+        <Tabs.Screen name="assistant" options={{ title: "Assistant", tabBarIcon: icon(ChatTeardropText) }} />
+        <Tabs.Screen name="account" options={{ title: "Compte", tabBarIcon: icon(Gear) }} />
       </Tabs>
     </View>
   );
