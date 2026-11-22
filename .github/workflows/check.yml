@@ -26,5 +26,81 @@ jobs:
       - run: npm ci --legacy-peer-deps
       - name: Vérifier les types
         run: npm run typecheck
+      - name: Vérifier le style
+        run: npm run lint
       - name: Exécuter les tests
         run: npm test
+
+  parcours:
+    name: Parcours dans le navigateur, avec le site
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      db:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: vyra
+          POSTGRES_PASSWORD: vyra
+          POSTGRES_DB: vyra
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vyra -d vyra"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      # Base éphémère du job, sans aucune donnée ni secret de production.
+      DATABASE_URL: postgres://vyra:vyra@127.0.0.1:5432/vyra
+      NEXT_TELEMETRY_DISABLED: '1'
+      SITE_DIR: ${{ github.workspace }}/../vyra
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Le site à côté de l'application (../vyra) : le test des libellés le compare aussi.
+      - name: Récupérer le site
+        run: git clone --depth 1 https://github.com/0nlyDevs/vyra.git "$SITE_DIR"
+      - name: Préparer la base et les données de démo du site
+        working-directory: ${{ env.SITE_DIR }}/web
+        run: |
+          npm ci --no-audit --no-fund
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f ../docker/initdb/01-extensions.sql
+          npm run db:migrate
+          npm run db:seed
+      - name: Construire et démarrer le site en mode démo
+        working-directory: ${{ env.SITE_DIR }}/web
+        run: |
+          npm run build
+          DEMO_MODE=true nohup npm run start -- --hostname 127.0.0.1 --port 3000 > "$RUNNER_TEMP/site.log" 2>&1 &
+          curl --fail --silent --retry 20 --retry-connrefused --retry-delay 2 --output /dev/null http://127.0.0.1:3000/api/v1/auth/demo
+      - name: Installer l'application
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+      - name: Vérifier que les libellés sont ceux du site
+        run: npm test
+      - name: Construire l'application pour le navigateur
+        run: npx expo export --platform web
+        env:
+          EXPO_PUBLIC_API_URL: http://127.0.0.1:3000
+      - name: Installer le navigateur de test (hors des dépendances de l'application)
+        run: |
+          npm install --prefix "$RUNNER_TEMP/pw" --no-audit --no-fund playwright@1.52.0
+          "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Parcourir chaque écran
+        run: |
+          nohup npx expo serve --port 8081 > "$RUNNER_TEMP/app.log" 2>&1 &
+          curl --fail --silent --retry 20 --retry-connrefused --retry-delay 2 --output /dev/null http://localhost:8081/
+          NODE_PATH="$RUNNER_TEMP/pw/node_modules" node e2e/parcours.cjs
+      - name: Garder les captures et le rapport
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: parcours
+          path: e2e/resultats/
+          if-no-files-found: ignore
+      - name: Afficher les journaux en cas d'échec
+        if: failure()
+        run: |
+          tail -n 80 "$RUNNER_TEMP/site.log" 2>/dev/null || true
+          tail -n 40 "$RUNNER_TEMP/app.log" 2>/dev/null || true
