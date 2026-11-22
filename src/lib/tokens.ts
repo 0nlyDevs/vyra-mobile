@@ -79,8 +79,8 @@ export const dark: Palette = {
   verdict: {
     true: { fill: "#3ddc84", on: "#0a0a0b", soft: "#0f2219", ink: "#3ddc84" },
     misleading: { fill: "#ffb224", on: "#0a0a0b", soft: "#29200c", ink: "#ffb224" },
-    false: { fill: "#ff4a3d", on: "#0a0a0b", soft: "#2a1311", ink: "#ff6a5f" },
-    unverifiable: { fill: "#3b8cff", on: "#0a0a0b", soft: "#101a2b", ink: "#6aa8ff" },
+    false: { fill: "#ff6a5f", on: "#0a0a0b", soft: "#2a1311", ink: "#ff6a5f" },
+    unverifiable: { fill: "#6aa8ff", on: "#0a0a0b", soft: "#101a2b", ink: "#6aa8ff" },
   },
 };
 

@@ -18,7 +18,7 @@ import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, wi
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { type Certainty, CERTAINTY_LABELS } from "@/lib/api";
-import { Check, CheckCircle, CircleDashed, type Icon, Question, SpinnerGap, Warning, X, XCircle } from "@/lib/icons";
+import { Check, CheckCircle, CircleDashed, type Icon, Info, Question, SpinnerGap, Warning, X, XCircle } from "@/lib/icons";
 import { fonts, radius, tracking, useTheme } from "@/lib/theme";
 
 // Le kit d'interface de Checky, « encre et papier » : l'encre est l'action, la couleur n'appartient
@@ -201,23 +201,29 @@ export function Notice({ children, tone = "default" }: { children: ReactNode; to
 
 type Family = "true" | "misleading" | "false" | "unverifiable";
 
-/** Chaque conclusion du juge dans une famille de verdict de Checky. */
-const CERTAINTY_FAMILY: Record<Certainty, Family> = {
+/** Chaque conclusion du juge dans une famille de verdict, comme sur le site (CERTAINTY_TONES de
+ * web/src/lib/domain.ts) et dans l'extension. « Informations insuffisantes » reste neutre. */
+const CERTAINTY_FAMILY: Record<Certainty, Family | "neutral"> = {
   established: "true",
   probable: "unverifiable",
   uncertain: "misleading",
   contradicted: "false",
-  insufficient: "unverifiable",
+  insufficient: "neutral",
 };
 
-const FAMILY_ICON: Record<Family, Icon> = { true: Check, misleading: Warning, false: X, unverifiable: Question };
+const FAMILY_ICON: Record<Family | "neutral", Icon> = { true: Check, misleading: Warning, false: X, unverifiable: Question, neutral: Info };
+
+/** La famille d'une conclusion, en couleurs : le neutre prend le gris et l'encre. */
+function verdictColors(c: ReturnType<typeof useTheme>, level: Certainty) {
+  const family = CERTAINTY_FAMILY[level];
+  return family === "neutral" ? { fill: c.muted, on: c.foreground, soft: c.muted, ink: c.foreground } : c.verdict[family];
+}
 
 /** Jamais la couleur seule : l'icône et le mot. Un verdict du juge est plein (étiquette de 6 px). */
 export function VerdictBadge({ level, large, bare }: { level: Certainty; large?: boolean; bare?: boolean }) {
   const c = useTheme();
-  const family = CERTAINTY_FAMILY[level];
-  const v = c.verdict[family];
-  const Glyph = FAMILY_ICON[family];
+  const v = verdictColors(c, level);
+  const Glyph = FAMILY_ICON[CERTAINTY_FAMILY[level]];
   const fg = bare ? v.ink : v.on;
   return (
     <View
@@ -253,7 +259,7 @@ export function CertaintyBadge({ level }: { level: Certainty | null }) {
 /** La conclusion du juge : cadre plein de 2 px à l'encre du verdict, sur sa teinte. */
 export function VerdictPanel({ level, children }: { level: Certainty; children?: ReactNode }) {
   const c = useTheme();
-  const v = c.verdict[CERTAINTY_FAMILY[level]];
+  const v = verdictColors(c, level);
   return (
     <View style={{ gap: 10, padding: 14, borderRadius: radius.card, borderWidth: 2, borderColor: v.ink, backgroundColor: v.soft }}>
       <VerdictBadge level={level} large bare />

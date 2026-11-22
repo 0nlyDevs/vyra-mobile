@@ -74,7 +74,7 @@ export default function CheckScreen() {
       {result && (
         <>
           {result.judged ? (
-            <Section title="Déjà jugée">
+            <Section title="Déjà jugée par le tribunal">
               {level ? (
                 <VerdictPanel level={level}>
                   <T style={{ fontFamily: fonts.bold, fontSize: 18, lineHeight: 24 }}>{result.judged.title}</T>
@@ -86,7 +86,7 @@ export default function CheckScreen() {
                       onPress={() => router.push({ pathname: "/case/[id]", params: { id: judgedId } })}
                       style={[styles.row, { gap: 6, alignSelf: "flex-start" }]}
                     >
-                      <T style={{ fontFamily: fonts.semibold, textDecorationLine: "underline" }}>Voir le dossier</T>
+                      <T style={{ fontFamily: fonts.semibold, textDecorationLine: "underline" }}>Voir les preuves</T>
                       <CaretRight size={16} color={c.foreground} />
                     </Pressable>
                   )}
@@ -97,14 +97,14 @@ export default function CheckScreen() {
             </Section>
           ) : (
             <View style={{ borderWidth: 1, borderStyle: "dashed", borderColor: c.foreground, borderRadius: radius.card, padding: 14, gap: 4 }}>
-              <T style={{ fontFamily: fonts.bold, fontSize: 17 }}>Pas encore de verdict</T>
+              <T style={{ fontFamily: fonts.bold, fontSize: 17 }}>Pas encore jugée</T>
               <T tone="muted">Aucune affaire jugée ne ressemble à ce texte. Cela ne veut pas dire qu’il est vrai : ouvrez une enquête depuis le site pour le faire juger.</T>
             </View>
           )}
 
-          {/* « Ce qui doit vous alerter » : relevé dans les mots, sans IA ; cela ne dit rien de la vérité. */}
+          {/* Les signes d'alerte : relevé dans les mots, sans IA ; cela ne dit rien de la vérité. */}
           <View style={{ borderWidth: 2, borderColor: c.foreground, borderRadius: radius.card, backgroundColor: c.card, padding: 14, gap: 10 }}>
-            <T style={{ fontFamily: fonts.bold, fontSize: 18 }}>Ce qui doit vous alerter</T>
+            <T style={{ fontFamily: fonts.bold, fontSize: 18 }}>Signes d’alerte dans le message</T>
             <View style={styles.wrap}>
               {result.signals.map((signal) => (
                 <ToneTag key={signal.label} label={signal.label} tone={signal.tone} />
