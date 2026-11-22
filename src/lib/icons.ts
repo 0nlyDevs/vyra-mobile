@@ -2,6 +2,7 @@ import { createElement, type ComponentType } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 import {
   ArrowLeft as PArrowLeft,
+  ArrowRight as PArrowRight,
   Lightning as PLightning,
   QrCode as PQrCode,
   Camera as PCamera,
@@ -65,6 +66,19 @@ import {
   ShieldWarning as PShieldWarning,
   FilmStrip as PFilmStrip,
   Buildings as PBuildings,
+  Siren as PSiren,
+  Graph as PGraph,
+  Sun as PSun,
+  Moon as PMoon,
+  DeviceMobile as PDeviceMobile,
+  Leaf as PLeaf,
+  Robot as PRobot,
+  UserPlus as PUserPlus,
+  Key as PKey,
+  ChatCircleDots as PChatCircleDots,
+  Flag as PFlag,
+  TrendUp as PTrendUp,
+  Stack as PStack,
   type IconProps,
 } from "phosphor-react-native";
 
@@ -78,6 +92,7 @@ function duo(Base: ComponentType<IconProps>): Icon {
 }
 
 export const ArrowLeft = duo(PArrowLeft);
+export const ArrowRight = duo(PArrowRight);
 export const Lightning = duo(PLightning);
 export const QrCode = duo(PQrCode);
 export const Camera = duo(PCamera);
@@ -141,3 +156,16 @@ export const Money = duo(PMoney);
 export const ShieldWarning = duo(PShieldWarning);
 export const FilmStrip = duo(PFilmStrip);
 export const Buildings = duo(PBuildings);
+export const Siren = duo(PSiren);
+export const Graph = duo(PGraph);
+export const Sun = duo(PSun);
+export const Moon = duo(PMoon);
+export const DeviceMobile = duo(PDeviceMobile);
+export const Leaf = duo(PLeaf);
+export const Robot = duo(PRobot);
+export const UserPlus = duo(PUserPlus);
+export const Key = duo(PKey);
+export const ChatCircleDots = duo(PChatCircleDots);
+export const Flag = duo(PFlag);
+export const TrendUp = duo(PTrendUp);
+export const Stack = duo(PStack);

@@ -41,22 +41,23 @@ function Outcome({ check }: { check: SealResult }) {
   const { content } = check;
   const genuine = check.status === "genuine";
   return (
-    <Result icon={genuine ? SealIcon : ShieldWarning} title={genuine ? `Sceau authentique, ${check.code}` : "Ce sceau ne correspond pas"} tone={genuine ? "true" : "false"}>
+    <Result icon={genuine ? SealIcon : ShieldWarning} title={genuine ? `Sceau authentique · ${check.code}` : "Ce sceau ne correspond pas"} tone={genuine ? "true" : "false"}>
       <T>
         {genuine
           ? "Cette conclusion vient bien de Vyra. Comparez-la mot pour mot avec la carte reçue : si le texte de la carte diffère, la carte a été retouchée."
           : `La carte a été modifiée, ou la conclusion a changé depuis qu’elle a été faite. Ne la partagez pas. Voici la conclusion actuelle, la seule qui fait foi${check.code ? ` (sceau ${check.code})` : ""}.`}
       </T>
+      <T tone="muted">Ce qui circule</T>
       <Quote>{content.claim}</Quote>
       <VerdictBadge level={content.certainty} />
       <T>{content.conclusion}</T>
-      <Button label="Voir le dossier" variant="outline" onPress={() => router.push({ pathname: "/case/[id]", params: { id: content.id } })} />
+      <Button label="Voir les preuves" variant="outline" onPress={() => router.push({ pathname: "/case/[id]", params: { id: content.id } })} />
     </Result>
   );
 }
 
 /** Vérifier un sceau : le code imprimé sous la carte (VY-XXXX-XXXX) ou le lien de son QR. Un code
- * reçu dans l'adresse (`/check?mode=seal&code=…`) est déjà recopié dans le champ. */
+ * reçu dans l'adresse (`/scan?onglet=sceau&code=…`, ou le lien d'un QR) est déjà recopié dans le champ. */
 export function SealVerify({ initial }: { initial?: string }) {
   const [input, setInput] = useState(initial ?? "");
   const [busy, setBusy] = useState(false);
@@ -80,9 +81,9 @@ export function SealVerify({ initial }: { initial?: string }) {
 
   return (
     <>
-      <T tone="muted">Une carte de conclusion partagée porte un code et un QR. Recopiez le code (ou collez le lien du QR) : Vyra dit si la carte dit bien ce que le tribunal a conclu.</T>
-      <Field label="Le code ou le lien" value={input} onChangeText={setInput} placeholder="VY-XXXX-XXXX" autoCapitalize="characters" autoCorrect={false} onSubmitEditing={() => run()} />
-      <Button label="Vérifier le sceau" icon={SealIcon} busy={busy} disabled={input.trim().length < 8} onPress={() => run()} />
+      <T tone="muted">Une carte de conclusion Vyra porte un QR et un code. Collez le lien du QR, ou tapez le code : vous voyez si la carte est authentique, et la vraie conclusion.</T>
+      <Field label="Code du sceau" value={input} onChangeText={setInput} placeholder="VY-XXXX-XXXX" autoCapitalize="characters" autoCorrect={false} onSubmitEditing={() => run()} />
+      <Button label="Vérifier" icon={SealIcon} busy={busy} disabled={input.trim().length < 8} onPress={() => run()} />
       {error && <Notice tone="error">{error}</Notice>}
       {check && !busy && <Outcome check={check} />}
     </>

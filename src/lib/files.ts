@@ -1,3 +1,4 @@
+import * as DocumentPicker from "expo-document-picker";
 import { File, Paths } from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import * as Sharing from "expo-sharing";
@@ -19,7 +20,14 @@ const EXTENSION: Record<string, string> = {
   "video/quicktime": "mov",
   "video/webm": "webm",
   "video/3gpp": "3gp",
+  "audio/mpeg": "mp3",
+  "audio/ogg": "ogg",
+  "audio/mp4": "m4a",
+  "audio/wav": "wav",
 };
+
+/** Les vocaux acceptés par le site (AUDIO_TYPES de web/src/features/scan/schema.ts). */
+export const AUDIO_TYPES = ["audio/wav", "audio/x-wav", "audio/wave", "audio/mpeg", "audio/mp3", "audio/ogg", "audio/webm", "audio/mp4", "audio/x-m4a"];
 
 /** Ce que la personne a choisi (avec sa taille quand le téléphone la donne), ou null si elle a renoncé. */
 export type Picked = { file: PickedFile; size: number | null } | null;
@@ -40,6 +48,16 @@ export async function pickMedia(kind: "images" | "videos", camera = false): Prom
   const asset = result.canceled ? null : result.assets[0];
   if (!asset) return null;
   return { file: fromAsset(asset, kind), size: asset.fileSize ?? null };
+}
+
+/** Un vocal (message vocal enregistré, fichier audio) choisi parmi les fichiers du téléphone. */
+export async function pickAudio(): Promise<Picked> {
+  const result = await DocumentPicker.getDocumentAsync({ type: AUDIO_TYPES, copyToCacheDirectory: true, multiple: false });
+  const asset = result.canceled ? null : result.assets[0];
+  if (!asset) return null;
+  // Un vocal WhatsApp arrive souvent en .opus ou sans type : on le présente comme de l'OGG.
+  const type = asset.mimeType && AUDIO_TYPES.includes(asset.mimeType) ? asset.mimeType : "audio/ogg";
+  return { file: { uri: asset.uri, name: asset.name || `vocal.${EXTENSION[type] ?? "ogg"}`, type }, size: asset.size ?? null };
 }
 
 /** Un fichier de démonstration publié par le site (`/demo/…`), prêt à envoyer. */

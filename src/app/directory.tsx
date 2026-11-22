@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View } from "react-native";
 
+import { AssistantButton } from "@/components/assistant-button";
 import { ApiError, del, type Directory, type DirectoryEntry, formatDate, formatPhone, post } from "@/lib/api";
 import { Buildings, FileText, Plus, Trash } from "@/lib/icons";
 import { fonts, useTheme } from "@/lib/theme";
@@ -200,29 +201,32 @@ export default function DirectoryScreen() {
   const [adding, setAdding] = useState(false);
   const refresh = () => void mutate();
   return (
-    <Screen onRefresh={refresh} refreshing={isValidating && !isLoading}>
-      <View style={{ gap: 6 }}>
-        <T tone="title">Annuaire officiel</T>
-        <T tone="muted">Les canaux officiels de chaque institution et leurs communiqués : « Est-ce bien eux ? » compare chaque message à cette liste.</T>
-      </View>
-      {isLoading && <Loading />}
-      {error && <Notice tone="error">{error.message}</Notice>}
-      {data?.canEdit && (
-        <Section title="Tenir l’annuaire à jour" note="Réservé aux vérificateurs.">
-          {adding ? (
-            <InstitutionFormView
-              onDone={() => {
-                setAdding(false);
-                refresh();
-              }}
-            />
-          ) : (
-            <Button label="Ajouter une institution" icon={Plus} variant="outline" onPress={() => setAdding(true)} />
-          )}
-        </Section>
-      )}
-      {data?.entries.length === 0 && <T tone="muted">L’annuaire est vide.</T>}
-      {data?.entries.map((entry) => <Entry key={entry.id} entry={entry} canEdit={data.canEdit} refresh={refresh} />)}
-    </Screen>
+    <View style={{ flex: 1 }}>
+      <Screen onRefresh={refresh} refreshing={isValidating && !isLoading}>
+        <View style={{ gap: 6 }}>
+          <T tone="title">Annuaire officiel</T>
+          <T tone="muted">Les canaux officiels de chaque institution et leurs communiqués : « Est-ce bien eux ? » compare chaque message à cette liste.</T>
+        </View>
+        {isLoading && <Loading />}
+        {error && <Notice tone="error">{error.message}</Notice>}
+        {data?.canEdit && (
+          <Section title="Tenir l’annuaire à jour" note="Réservé aux vérificateurs.">
+            {adding ? (
+              <InstitutionFormView
+                onDone={() => {
+                  setAdding(false);
+                  refresh();
+                }}
+              />
+            ) : (
+              <Button label="Ajouter une institution" icon={Plus} variant="outline" onPress={() => setAdding(true)} />
+            )}
+          </Section>
+        )}
+        {data?.entries.length === 0 && <T tone="muted">L’annuaire est vide.</T>}
+        {data?.entries.map((entry) => <Entry key={entry.id} entry={entry} canEdit={data.canEdit} refresh={refresh} />)}
+      </Screen>
+      <AssistantButton />
+    </View>
   );
 }

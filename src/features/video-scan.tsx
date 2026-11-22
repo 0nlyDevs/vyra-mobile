@@ -52,8 +52,9 @@ function Keyframes({ scan }: { scan: ScanView }) {
   );
 }
 
-/** La bande son transcrite par l'IA, l'affaire déjà jugée qui lui ressemble, et l'enquête à ouvrir. */
-function Soundtrack({ scan }: { scan: ScanView }) {
+/** Ce que dit le son (bande son d'une vidéo, ou vocal), transcrit par l'IA, l'affaire déjà jugée
+ * qui lui ressemble, et l'enquête à ouvrir. */
+export function Soundtrack({ scan, title = "4. La bande son, transcrite par l’IA", where = "Dans la vidéo" }: { scan: ScanView; title?: string; where?: string }) {
   const router = useRouter();
   const c = useTheme();
   const [busy, setBusy] = useState(false);
@@ -61,8 +62,8 @@ function Soundtrack({ scan }: { scan: ScanView }) {
   const { transcript, judged } = scan;
   if (!transcript) {
     return (
-      <FactStep icon={Waveform} title="4. La bande son">
-        <T tone="muted">Pas de parole transcrite dans cette vidéo.</T>
+      <FactStep icon={Waveform} title={title}>
+        <T tone="muted">{scan.kind === "audio" ? "L’IA ne répond pas et ce vocal n’a pas de réponse préparée. Vérifiez l’IA, puis réessayez." : "Pas de parole transcrite dans cette vidéo."}</T>
       </FactStep>
     );
   }
@@ -82,9 +83,9 @@ function Soundtrack({ scan }: { scan: ScanView }) {
 
   return (
     <>
-      <AiReading title="4. La bande son, transcrite par l’IA" label="Transcription par l’IA">
+      <AiReading title={title} label="Transcription par l’IA">
         <T tone="muted" style={{ fontSize: 13 }}>
-          Dans la vidéo{transcript.language ? ` · ${transcript.language}` : ""}
+          {where}{transcript.language ? ` · ${transcript.language}` : ""}
         </T>
         <Quote>{transcript.transcript}</Quote>
         {transcript.translation ? <T tone="muted">Traduction : {transcript.translation}</T> : null}

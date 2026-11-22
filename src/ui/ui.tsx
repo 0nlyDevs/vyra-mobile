@@ -18,7 +18,9 @@ import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, wi
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { type Certainty, CERTAINTY_LABELS } from "@/lib/api";
+import { CASE_STATUS_LABELS } from "@/lib/domain";
 import { Check, CheckCircle, CircleDashed, type Icon, Info, Question, SpinnerGap, Warning, X, XCircle } from "@/lib/icons";
+import { usePreferences, useTextScale } from "@/lib/preferences";
 import { fonts, radius, tracking, useTheme } from "@/lib/theme";
 
 // Le kit d'interface « encre et papier » : l'encre est l'action, la couleur n'appartient
@@ -30,6 +32,19 @@ export const useAppChrome = () => useContext(AppChromeContext);
 
 type Tone = "default" | "muted" | "title" | "label" | "tabular";
 
+/** Un texte à la taille choisie dans Compte (A− / A+, comme sur le site) : la taille et
+ * l'interligne suivent le réglage. Tout le texte de l'application passe par ici. */
+export function ScaledText({ style, ...rest }: TextProps) {
+  const scale = useTextScale();
+  if (scale === 1) return <Text style={style} {...rest} />;
+  const flat = StyleSheet.flatten(style) ?? {};
+  const sized = {
+    ...(flat.fontSize ? { fontSize: Math.round(flat.fontSize * scale * 10) / 10 } : {}),
+    ...(flat.lineHeight ? { lineHeight: Math.round(flat.lineHeight * scale) } : {}),
+  };
+  return <Text style={[flat, sized]} {...rest} />;
+}
+
 export function T({ tone = "default", style, ...rest }: TextProps & { tone?: Tone }) {
   const c = useTheme();
   const base = {
@@ -39,16 +54,16 @@ export function T({ tone = "default", style, ...rest }: TextProps & { tone?: Ton
     label: { fontFamily: fonts.semibold, fontSize: 13, lineHeight: 18, color: c.mutedForeground, letterSpacing: 0.4, textTransform: "uppercase" as const },
     tabular: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 20, color: c.foreground, fontVariant: ["tabular-nums" as const] },
   }[tone];
-  return <Text style={[base, style]} {...rest} />;
+  return <ScaledText style={[base, style]} {...rest} />;
 }
 
 /** Une citation mot pour mot : le Cormorant italique, réservé aux passages cités. */
 export function Quote({ children, style, ...rest }: TextProps & { children: ReactNode }) {
   const c = useTheme();
   return (
-    <Text style={[{ fontFamily: fonts.quote, fontSize: 19, lineHeight: 25, color: c.foreground }, style]} {...rest}>
+    <ScaledText style={[{ fontFamily: fonts.quote, fontSize: 19, lineHeight: 25, color: c.foreground }, style]} {...rest}>
       « {children} »
-    </Text>
+    </ScaledText>
   );
 }
 
@@ -73,7 +88,8 @@ export function Screen({
         <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
           <ScrollView
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 20 }}
+            // En bas, la place du bouton de l'assistant qui flotte au-dessus du contenu.
+            contentContainerStyle={{ padding: 16, paddingBottom: 104, gap: 20 }}
             refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.foreground} colors={[c.foreground]} /> : undefined}
           >
             {children}
@@ -94,11 +110,12 @@ export function Card({ style, ...rest }: ViewProps) {
 /** Une carte qu'on touche : elle s'enfonce un peu sous le doigt. */
 export function PressCard({ style, children, ...rest }: PressableProps & { style?: ViewProps["style"]; children: ReactNode }) {
   const c = useTheme();
+  const { eco } = usePreferences();
   return (
     <Pressable
       accessibilityRole="button"
       style={({ pressed }) => [
-        { backgroundColor: c.card, borderColor: c.border, borderWidth: 1, borderRadius: radius.card, padding: 18, gap: 14, transform: [{ scale: pressed ? 0.97 : 1 }], opacity: pressed ? 0.9 : 1 },
+        { backgroundColor: c.card, borderColor: c.border, borderWidth: 1, borderRadius: radius.card, padding: 18, gap: 14, transform: [{ scale: pressed && !eco ? 0.97 : 1 }], opacity: pressed ? 0.9 : 1 },
         style,
       ]}
       {...rest}
@@ -112,6 +129,7 @@ type ButtonProps = PressableProps & { label: string; icon?: Icon; variant?: "pri
 
 export function Button({ label, icon: Glyph, variant = "primary", busy, disabled, style, ...rest }: ButtonProps) {
   const c = useTheme();
+  const { eco } = usePreferences();
   const off = !!disabled && !busy;
   const fg = off ? c.mutedForeground : variant === "primary" ? c.primaryForeground : c.foreground;
   return (
@@ -131,7 +149,7 @@ export function Button({ label, icon: Glyph, variant = "primary", busy, disabled
           backgroundColor: off ? c.muted : variant === "primary" ? (state.pressed ? c.primaryPressed : c.primary) : state.pressed ? c.accent : "transparent",
           borderWidth: variant === "outline" ? 1 : 0,
           borderColor: c.input,
-          transform: [{ scale: state.pressed ? 0.97 : 1 }],
+          transform: [{ scale: state.pressed && !eco ? 0.97 : 1 }],
         },
         typeof style === "function" ? style(state) : style,
       ]}
@@ -139,9 +157,9 @@ export function Button({ label, icon: Glyph, variant = "primary", busy, disabled
     >
       {busy ? <ActivityIndicator color={fg} /> : Glyph ? <Glyph size={18} color={fg} style={{ flexShrink: 0 }} /> : null}
       {!!label && (
-        <Text style={{ fontFamily: fonts.semibold, fontSize: 16, color: fg, flexShrink: 1, textAlign: "center" }} numberOfLines={1}>
+        <ScaledText style={{ fontFamily: fonts.semibold, fontSize: 16, color: fg, flexShrink: 1, textAlign: "center" }} numberOfLines={1}>
           {label}
-        </Text>
+        </ScaledText>
       )}
     </Pressable>
   );
@@ -239,19 +257,21 @@ export function VerdictBadge({ level, large, bare }: { level: Certainty; large?:
       }}
     >
       <Glyph size={large ? 20 : 15} color={fg} />
-      <Text style={{ fontFamily: fonts.semibold, fontSize: large ? 18 : 14, color: fg }}>{CERTAINTY_LABELS[level]}</Text>
+      <ScaledText style={{ fontFamily: fonts.semibold, fontSize: large ? 18 : 14, color: fg }}>{CERTAINTY_LABELS[level]}</ScaledText>
     </View>
   );
 }
 
-/** Une affaire sans conclusion : le statut, à l'encre, jamais une couleur de vérité. */
-export function CertaintyBadge({ level }: { level: Certainty | null }) {
+/** Une affaire sans conclusion : son état (Ouverte, En enquête, En audience…), comme le badge du
+ * site, à l'encre, jamais une couleur de vérité. Sans état connu : « Pas encore jugée ». */
+export function CertaintyBadge({ level, status }: { level: Certainty | null; status?: string | null }) {
   const c = useTheme();
   if (level) return <VerdictBadge level={level} />;
+  const label = status && status in CASE_STATUS_LABELS ? CASE_STATUS_LABELS[status as keyof typeof CASE_STATUS_LABELS] : "Pas encore jugée";
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
       <CircleDashed size={15} color={c.mutedForeground} />
-      <T tone="muted">Pas encore jugée</T>
+      <T tone="muted">{label}</T>
     </View>
   );
 }
@@ -291,17 +311,20 @@ export function ToneTag({ label, tone }: { label: string; tone: string }) {
       }}
     >
       <Glyph size={15} color={alert ? c.foreground : c.mutedForeground} />
-      <Text style={{ fontFamily: fonts.semibold, fontSize: 14, color: alert ? c.foreground : c.mutedForeground }}>{label}</Text>
+      <ScaledText style={{ fontFamily: fonts.semibold, fontSize: 14, color: alert ? c.foreground : c.mutedForeground }}>{label}</ScaledText>
     </View>
   );
 }
 
+/** L'étape en cours tourne ; en mode éco, elle reste immobile. */
 function Spinner({ color }: { color: string }) {
+  const { eco } = usePreferences();
   const turn = useSharedValue(0);
   useEffect(() => {
+    if (eco) return;
     turn.value = withRepeat(withTiming(360, { duration: 900, easing: Easing.linear }), -1);
     return () => cancelAnimation(turn);
-  }, [turn]);
+  }, [turn, eco]);
   const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.value}deg` }] }));
   return (
     <Animated.View style={style}>
@@ -353,6 +376,7 @@ export function Section({ title, children, note }: { title: string; children: Re
 
 export function Chip({ label, selected, onPress }: { label: string; selected?: boolean; onPress?: () => void }) {
   const c = useTheme();
+  const { eco } = usePreferences();
   const [pressed, setPressed] = useState(false);
   const on = selected || pressed;
   return (
@@ -371,10 +395,10 @@ export function Chip({ label, selected, onPress }: { label: string; selected?: b
         // Choisi : l'encre et son libellé apparié ; appuyé : primaryPressed.
         borderColor: on ? c.primary : c.border,
         backgroundColor: pressed ? c.primaryPressed : selected ? c.primary : c.card,
-        transform: [{ scale: pressed ? 0.97 : 1 }],
+        transform: [{ scale: pressed && !eco ? 0.97 : 1 }],
       }}
     >
-      <Text style={{ fontFamily: selected ? fonts.semibold : fonts.medium, fontSize: 14, color: on ? c.primaryForeground : c.foreground }}>{label}</Text>
+      <ScaledText style={{ fontFamily: selected ? fonts.semibold : fonts.medium, fontSize: 14, color: on ? c.primaryForeground : c.foreground }}>{label}</ScaledText>
     </Pressable>
   );
 }

@@ -1,12 +1,15 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Linking, Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { ApiError, caseIdFrom, type Certainty, CERTAINTY_LABELS, type Check, post } from "@/lib/api";
-import { ArrowSquareOut, CaretRight, MagnifyingGlass, SealCheck } from "@/lib/icons";
+import { CERTAINTY_CRITERIA } from "@/lib/domain";
+import { CaretRight, Graph, MagnifyingGlass } from "@/lib/icons";
 import { fonts, radius, useTheme } from "@/lib/theme";
 import { AiReading } from "@/ui/ai-reading";
-import { Button, Field, Notice, Section, Step, T, ToneTag, VerdictPanel, styles } from "@/ui/ui";
+import { PublishedChecks } from "@/ui/published-checks";
+import { Button, Field, Notice, Section, Step, T, VerdictPanel, styles } from "@/ui/ui";
+import { WarningSigns } from "@/ui/warning-signs";
 
 const LONE_URL = /^https?:\/\/\S+$/i;
 /** Les trois endroits où Vyra cherche, dans l'ordre. */
@@ -43,18 +46,17 @@ export function TextCheck() {
 
   const judgedId = result?.judged ? caseIdFrom(result.judged.url) : null;
   const level = result?.judged ? certaintyOf(result.judged.label) : null;
-  const flagged = result?.signals.filter((signal) => signal.signs.length > 0) ?? [];
-
+  
   return (
     <>
-      <T tone="muted">Un texte reçu ou un lien : Vyra cherche s’il a déjà été jugé et relève les signes d’alerte. Jamais de nouveau verdict.</T>
+      <T tone="muted">Un message ou un lien reçu : Vyra cherche s’il a déjà été jugé, relève les signes d’alerte et les vérifications publiées. Jamais de verdict nouveau.</T>
       <Field
         label="Le message ou le lien"
         value={input}
         onChangeText={setInput}
         multiline
         numberOfLines={5}
-        placeholder="« URGENT : inondation ce matin… »"
+        placeholder="« URGENT : inondation ce matin… » ou https://…"
         style={{ minHeight: 120 }}
       />
       <Button label="Vérifier" icon={MagnifyingGlass} busy={busy} disabled={input.trim().length < 10} onPress={run} />
@@ -76,6 +78,7 @@ export function TextCheck() {
               {level ? (
                 <VerdictPanel level={level}>
                   <T style={{ fontFamily: fonts.bold, fontSize: 18, lineHeight: 24 }}>{result.judged.title}</T>
+                  <T tone="muted">Règle appliquée : {CERTAINTY_CRITERIA[level]}</T>
                   {result.judged.conclusion && (
                     <AiReading label="Conclusion rédigée par l’IA">
                       <T>{result.judged.conclusion}</T>
@@ -98,58 +101,19 @@ export function TextCheck() {
               )}
             </Section>
           ) : (
-            <View style={{ borderWidth: 1, borderStyle: "dashed", borderColor: c.foreground, borderRadius: radius.card, padding: 14, gap: 4 }}>
-              <T style={{ fontFamily: fonts.bold, fontSize: 17 }}>Pas encore jugée</T>
-              <T tone="muted">Aucune affaire jugée ne ressemble à ce texte. Cela ne veut pas dire qu’il est vrai : ouvrez une enquête depuis le site pour le faire juger.</T>
+            <View style={{ borderWidth: 1, borderColor: c.border, backgroundColor: c.card, borderRadius: radius.card, padding: 14 }}>
+              <T tone="muted">Aucune affaire jugée ne ressemble à ce message. Cela ne veut dire ni vrai ni faux : ouvrez une enquête pour retrouver ses versions.</T>
             </View>
           )}
 
-          {/* Les signes d'alerte : relevé dans les mots, sans IA ; cela ne dit rien de la vérité. */}
-          <View style={{ borderWidth: 2, borderColor: c.foreground, borderRadius: radius.card, backgroundColor: c.card, padding: 14, gap: 10 }}>
-            <T style={{ fontFamily: fonts.bold, fontSize: 18 }}>Signes d’alerte dans le message</T>
-            <View style={styles.wrap}>
-              {result.signals.map((signal) => (
-                <ToneTag key={signal.label} label={signal.label} tone={signal.tone} />
-              ))}
-            </View>
-            {flagged.length === 0 ? (
-              <T tone="muted">Aucun signe relevé dans les mots.</T>
-            ) : (
-              flagged.flatMap((signal) =>
-                signal.signs.map((sign) => (
-                  <T key={`${signal.label}-${sign.label}-${sign.quote}`}>
-                    <Text style={{ fontFamily: fonts.semibold }}>{sign.label}</Text>
-                    {"  "}
-                    <Text style={{ fontFamily: fonts.quote, fontSize: 18 }}>« {sign.quote} »</Text>
-                  </T>
-                )),
-              )
-            )}
-            <T tone="muted" style={{ fontSize: 13 }}>
-              Relevé dans les mots, sans IA : ces signes ne disent pas si l’information est vraie.
-            </T>
-          </View>
-
-          {result.factChecks.length > 0 && (
-            <Section title="Déjà vérifiée ailleurs" note="Relayé tel quel, avec les mots du vérificateur.">
-              {result.factChecks.map((check, index) => (
-                <View key={`${check.url ?? ""}${index}`} style={{ borderWidth: 2, borderColor: c.foreground, borderRadius: radius.card, backgroundColor: c.card, padding: 14, gap: 8 }}>
-                  <View style={[styles.row, { gap: 8 }]}>
-                    <SealCheck size={20} color={c.foreground} />
-                    <T style={{ fontFamily: fonts.semibold, flex: 1 }}>{check.publisher ?? "Vérificateur"}</T>
-                  </View>
-                  {check.title && <T style={{ fontSize: 17, lineHeight: 24 }}>{check.title}</T>}
-                  {check.rating && <T style={{ fontFamily: fonts.bold, fontSize: 17 }}>« {check.rating} »</T>}
-                  {check.url && (
-                    <Pressable accessibilityRole="link" hitSlop={8} onPress={() => check.url && Linking.openURL(check.url)} style={[styles.row, { gap: 6, alignSelf: "flex-start" }]}>
-                      <T style={{ fontFamily: fonts.semibold, textDecorationLine: "underline" }}>Lire la vérification</T>
-                      <ArrowSquareOut size={16} color={c.foreground} />
-                    </Pressable>
-                  )}
-                </View>
-              ))}
-            </Section>
-          )}
+          <WarningSigns signals={result.signals} />
+          <PublishedChecks checks={result.factChecks} />
+          <Button
+            label="Envoyer dans une enquête"
+            icon={Graph}
+            variant="outline"
+            onPress={() => router.navigate({ pathname: "/cases", params: { information: result.text } })}
+          />
         </>
       )}
     </>

@@ -9,6 +9,8 @@ type Session = {
   status: "loading" | "out" | "in";
   profile: Profile | null;
   signIn: (email: string, password: string) => Promise<void>;
+  /** Une session déjà obtenue (inscription, compte de démo) : même rangement que la connexion. */
+  startSession: (login: Login) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -44,13 +46,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const login = await post<Login>("/auth/login", { email, password });
+  const startSession = useCallback(async (login: Login) => {
     setToken(login.token);
     await kv.setItemAsync(KEY, login.token);
     setProfile(login.profile);
     setStatus("in");
   }, []);
+
+  const signIn = useCallback(
+    async (email: string, password: string) => startSession(await post<Login>("/auth/login", { email, password })),
+    [startSession],
+  );
 
   const signOut = useCallback(async () => {
     await post("/auth/logout").catch(() => null);
@@ -60,7 +66,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setStatus("out");
   }, []);
 
-  const value = useMemo(() => ({ status, profile, signIn, signOut }), [status, profile, signIn, signOut]);
+  const value = useMemo(() => ({ status, profile, signIn, startSession, signOut }), [status, profile, signIn, startSession, signOut]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

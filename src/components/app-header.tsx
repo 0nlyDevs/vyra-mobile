@@ -2,12 +2,13 @@ import { usePathname, useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { PROFILE_ROLE_LABELS } from "@/lib/domain";
 import { ArrowLeft } from "@/lib/icons";
 import { useSession } from "@/lib/session";
 import { fonts, useTheme } from "@/lib/theme";
 
 /** Les onglets ont chacun leur place dans la barre du bas ; ailleurs, l'en-tête offre le retour. */
-const ROOTS = ["/", "/cases", "/check", "/assistant", "/account"];
+const ROOTS = ["/", "/cases", "/scan", "/reports", "/account"];
 
 /** L'en-tête fixe, hors de la zone qui défile : la marque, le nom de la personne, le retour. */
 export function AppHeader() {
@@ -35,7 +36,7 @@ export function AppHeader() {
             Vyra<Text style={{ fontFamily: fonts.quote }}>.</Text>
           </Text>
           <Text numberOfLines={1} maxFontSizeMultiplier={1.3} style={{ fontFamily: fonts.medium, fontSize: 11, color: c.mutedForeground }}>
-            {profile ? profile.name : "Vérifier sur pièces"}
+            {profile ? `${profile.name} · ${PROFILE_ROLE_LABELS[profile.role as keyof typeof PROFILE_ROLE_LABELS] ?? profile.role}` : "Vérifier sur pièces"}
           </Text>
         </Pressable>
       </View>
