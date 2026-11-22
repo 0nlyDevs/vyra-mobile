@@ -89,10 +89,7 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/pw" --no-audit --no-fund playwright@1.52.0
           "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
       - name: Parcourir chaque écran
-        run: |
-          nohup npx expo serve --port 8081 > "$RUNNER_TEMP/app.log" 2>&1 &
-          curl --fail --silent --retry 20 --retry-connrefused --retry-delay 2 --output /dev/null http://localhost:8081/
-          NODE_PATH="$RUNNER_TEMP/pw/node_modules" node e2e/parcours.cjs
+        run: NODE_PATH="$RUNNER_TEMP/pw/node_modules" node e2e/parcours.cjs
       - name: Garder les captures et le rapport
         if: always()
         uses: actions/upload-artifact@v4
@@ -104,4 +101,3 @@ jobs:
         if: failure()
         run: |
           tail -n 80 "$RUNNER_TEMP/site.log" 2>/dev/null || true
-          tail -n 40 "$RUNNER_TEMP/app.log" 2>/dev/null || true

@@ -3,10 +3,14 @@
 // téléphone. Échoue sur une erreur non rattrapée, une route introuvable ou une page qui déborde
 // de côté. Les captures et le rapport vont dans `e2e/resultats/` (artefact de la CI).
 const fs = require("node:fs");
+const http = require("node:http");
 const path = require("node:path");
 const { chromium } = require("playwright");
 
-const APP = process.env.APP_URL ?? "http://localhost:8081";
+const PORT = 8081;
+const APP = `http://localhost:${PORT}`;
+const DIST = path.join(__dirname, "..", "dist");
+const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".ttf": "font/ttf", ".ico": "image/x-icon" };
 const OUT = path.join(__dirname, "resultats");
 const CASE_ID = "00000000-0000-4000-8000-000000000002";
 const SCAN_TABS = ["image", "video", "audio", "link", "texte", "source", "sceau"];
@@ -77,12 +81,27 @@ async function run(browser, { tag, profile, colorScheme, screens }) {
   await context.close();
 }
 
+// Sert `dist/` comme un hébergeur d'application d'une page : une adresse sans fichier
+// (/cases, /case/…) reçoit index.html, et le routeur de l'application prend le relais.
+function serve() {
+  const server = http.createServer((request, response) => {
+    const pathname = decodeURIComponent(new URL(request.url, APP).pathname);
+    let file = path.join(DIST, pathname);
+    if (!file.startsWith(DIST) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) file = path.join(DIST, "index.html");
+    response.writeHead(200, { "Content-Type": TYPES[path.extname(file)] ?? "application/octet-stream" });
+    fs.createReadStream(file).pipe(response);
+  });
+  return new Promise((resolve) => server.listen(PORT, () => resolve(server)));
+}
+
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
+  const server = await serve();
   const browser = await chromium.launch();
   await run(browser, { tag: "citoyen-clair", profile: "Hery", colorScheme: "light", screens: SCREENS });
   await run(browser, { tag: "verificateur-sombre", profile: "Rasoa", colorScheme: "dark", screens: SCREENS });
   await browser.close();
+  server.close();
   const report = [
     `Échecs (${failures.length})`,
     ...failures,
