@@ -1,98 +1,55 @@
-import * as Clipboard from "expo-clipboard";
-import * as ImagePicker from "expo-image-picker";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { ClipboardText, Images, QrCode, ShareNetwork } from "@/lib/icons";
-import { type ComponentRef, useEffect, useRef, useState } from "react";
-import { TextInput, View } from "react-native";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { Linking, Pressable, View } from "react-native";
 
-import { LightSuggest } from "@/components/light";
-import { OfflineNotice, OutboxList } from "@/components/outbox";
-import { useTabInset } from "@/components/tab-bar";
-import { Button, Card, Field, Notice, Screen, T } from "@/components/ui";
-import { handOff } from "@/lib/handoff";
-import { asPicked, usePendingPick } from "@/lib/picked";
-import { useT } from "@/lib/i18n";
-import { useTheme } from "@/lib/theme";
+import type { FeedItem } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
+import { CertaintyBadge, Chip, Card, Loading, Notice, Screen, T } from "@/ui/ui";
 
-/** Home: what to check. Most checks arrive by the share sheet; this screen is for the rest. */
-export default function AnalyseHome() {
-  const t = useT();
-  const c = useTheme();
+type Region = "mg" | "world";
+
+function age(iso: string) {
+  const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (minutes < 60) return `il y a ${minutes} min`;
+  if (minutes < 1440) return `il y a ${Math.round(minutes / 60)} h`;
+  return `il y a ${Math.round(minutes / 1440)} j`;
+}
+
+/** Le fil d'actualité : ce qui circule vraiment, avec l'état de vérification de chaque publication. */
+export default function Feed() {
   const router = useRouter();
-  const inset = useTabInset();
-  const { focus } = useLocalSearchParams<{ focus?: string }>();
-  const urlField = useRef<ComponentRef<typeof TextInput>>(null);
-  const [url, setUrl] = useState("");
-  const [text, setText] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  // The Vyra button navigates here with a fresh `focus` value each press.
-  useEffect(() => {
-    if (!focus) return;
-    const id = setTimeout(() => urlField.current?.focus(), 50);
-    return () => clearTimeout(id);
-  }, [focus]);
-
-  function go() {
-    const u = url.trim();
-    const x = text.trim();
-    if (!u && !x) return setError(t.analyse.empty);
-    setError(null);
-    router.push({ pathname: "/analyze", params: { id: handOff({ url: u || undefined, text: x || undefined }) } });
-  }
-
-  async function paste() {
-    const s = (await Clipboard.getStringAsync()).trim();
-    if (/^https?:\/\//i.test(s)) setUrl(s);
-    else if (s) setText(s);
-  }
-
-  async function pick() {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return setError(t.analyse.permission);
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["videos", "images"], quality: 1, allowsEditing: false, exif: true });
-    const a = res.assets?.[0];
-    if (res.canceled || !a) return;
-    router.push({ pathname: "/analyze", params: { id: handOff({ file: asPicked(a) }) } });
-  }
-  // Android recreated the app while the picker was open: the picked file waits here.
-  usePendingPick((file) => router.push({ pathname: "/analyze", params: { id: handOff({ file }) } }));
+  const [region, setRegion] = useState<Region>("mg");
+  const { data, error, isLoading, isValidating, mutate } = useApi<{ items: FeedItem[] }>(`/feed?region=${region}`);
 
   return (
-    <Screen bottomInset={inset}>
-      <View style={{ gap: 6 }}>
-        <T tone="title">{t.analyse.title}</T>
-        <T tone="muted">{t.analyse.lead}</T>
+    <Screen onRefresh={() => mutate()} refreshing={isValidating && !isLoading}>
+      <T tone="title">Fil d’actualité</T>
+      <View style={{ flexDirection: "row", gap: 8 }}>
+        <Chip label="Madagascar" selected={region === "mg"} onPress={() => setRegion("mg")} />
+        <Chip label="Monde" selected={region === "world"} onPress={() => setRegion("world")} />
       </View>
-      <OfflineNotice />
-      <LightSuggest />
-      <OutboxList />
-      <Card style={{ flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: c.muted, borderColor: c.muted }}>
-        <ShareNetwork size={20} color={c.foreground} />
-        <T style={{ flex: 1, fontSize: 15 }}>{t.analyse.shareHint}</T>
-      </Card>
-      <Button label={t.analyse.pick} icon={Images} onPress={pick} />
-      <Button label={t.scanner.open} icon={QrCode} variant="outline" onPress={() => router.push("/scanner")} />
-      <View style={{ gap: 12 }}>
-        <Field
-          ref={urlField}
-          label={t.analyse.url}
-          placeholder={t.analyse.urlPlaceholder}
-          value={url}
-          onChangeText={setUrl}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-          inputMode="url"
-          onSubmitEditing={go}
-        />
-        <Field label={t.analyse.text} placeholder={t.analyse.textPlaceholder} value={text} onChangeText={setText} multiline style={{ minHeight: 96, textAlignVertical: "top" }} />
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          <Button label={t.analyse.paste} icon={ClipboardText} variant="outline" onPress={paste} style={{ flex: 1 }} />
-          <Button label={t.analyse.submit} onPress={go} style={{ flex: 1 }} />
-        </View>
-        {error && <Notice tone="error">{error}</Notice>}
-      </View>
+      {error && <Notice tone="error">{error.message}</Notice>}
+      {isLoading && <Loading />}
+      {data && data.items.length === 0 && <Notice>Aucune publication pour l’instant. Tirez pour actualiser.</Notice>}
+      {data?.items.map((item) => (
+        <Pressable
+          key={item.id}
+          accessibilityRole="button"
+          onPress={() => (item.case ? router.push({ pathname: "/case/[id]", params: { id: item.case.id } }) : Linking.openURL(item.url))}
+        >
+          <Card>
+            <T tone="label">
+              {item.sourceName} · {age(item.publishedAt)}
+            </T>
+            {item.title && <T style={{ fontFamily: "BricolageGrotesque_700Bold", fontSize: 18, lineHeight: 24 }}>{item.title}</T>}
+            <T numberOfLines={4}>{item.body}</T>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <CertaintyBadge level={item.case?.certainty ?? null} />
+              {item.reporterCount > 0 && <T tone="muted">{item.reporterCount} signalement{item.reporterCount > 1 ? "s" : ""}</T>}
+            </View>
+          </Card>
+        </Pressable>
+      ))}
     </Screen>
   );
 }

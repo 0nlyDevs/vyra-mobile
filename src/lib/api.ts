@@ -1,67 +1,109 @@
-import { authClient } from "@/lib/auth";
+import { ApiError, readError } from "@/lib/api-core";
 import { API_URL } from "@/lib/config";
 
-export class ApiError extends Error {
-  constructor(
-    public status: number,
-    public code: string,
-    message: string,
-  ) {
-    super(message);
-  }
-}
+export { ApiError, caseIdFrom, readError } from "@/lib/api-core";
 
-let cached: { token: string; exp: number } | null = null;
-let inflight: Promise<string> | null = null;
+// Le client de l'API de Vyra (`docs/API-MOBILE.md` du dépôt vyra). Une erreur renvoyée par le site
+// (`{ error: { code, message } }`) devient une ApiError ; une panne réseau devient NETWORK.
 
-function jwtExp(token: string): number {
-  const part = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-  return JSON.parse(atob(part.padEnd(part.length + ((4 - (part.length % 4)) % 4), "="))).exp as number;
-}
+let token: string | null = null;
+export const setToken = (value: string | null) => {
+  token = value;
+};
 
-/** Short-lived JWT for FastAPI, refreshed a minute before it expires; one request at a time. */
-export function getApiToken(): Promise<string> {
-  if (cached && cached.exp - 60 > Date.now() / 1000) return Promise.resolve(cached.token);
-  inflight ??= (async () => {
-    const { data, error } = await authClient.token();
-    if (error || !data) throw new ApiError(401, "unauthorized", "Not signed in");
-    cached = { token: data.token, exp: jwtExp(data.token) };
-    return data.token;
-  })().finally(() => {
-    inflight = null;
-  });
-  return inflight;
-}
-
-export function clearApiToken() {
-  cached = null;
-}
-
-export async function errorFrom(res: Response): Promise<ApiError> {
-  const body = await res.json().catch(() => null);
-  const err = body?.error ?? {};
-  return new ApiError(res.status, err.code ?? "http_error", err.message ?? `HTTP ${res.status}`);
-}
-
-/** On a weak network a request can hang with no answer: give up after a minute unless the caller
- * passes its own signal. */
-const TIMEOUT_MS = 60_000;
-
-export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = await getApiToken();
-  const ctrl = init.signal ? null : new AbortController();
-  const timer = ctrl ? setTimeout(() => ctrl.abort(), TIMEOUT_MS) : null;
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  let res: Response;
   try {
-    const res = await fetch(`${API_URL}/api/v1${path}`, {
+    res = await fetch(`${API_URL}/api/v1${path}`, {
       ...init,
-      signal: init.signal ?? ctrl?.signal,
-      headers: { "content-type": "application/json", authorization: `Bearer ${token}`, ...init.headers },
+      headers: {
+        "content-type": "application/json",
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+        ...init.headers,
+      },
     });
-    if (!res.ok) throw await errorFrom(res);
-    return (res.status === 204 ? null : await res.json()) as T;
-  } finally {
-    if (timer) clearTimeout(timer);
+  } catch {
+    throw new ApiError("NETWORK", "Le serveur est injoignable. Vérifiez la connexion.", 0);
   }
+  const body: unknown = await res.json().catch(() => null);
+  if (!res.ok) throw readError(res.status, body);
+  return body as T;
 }
 
-export const fetcher = <T>(path: string) => api<T>(path);
+export const get = <T>(path: string) => request<T>(path);
+export const post = <T>(path: string, body?: unknown) =>
+  request<T>(path, { method: "POST", body: body === undefined ? undefined : JSON.stringify(body) });
+
+// ---------- Formes des réponses ----------
+
+export type Profile = { id: string; name: string; role: string; headline: string };
+export type Login = { token: string; expiresAt: string; profile: Profile };
+
+export type Certainty = "established" | "probable" | "uncertain" | "contradicted" | "insufficient";
+
+export type FeedItem = {
+  id: string;
+  url: string;
+  sourceName: string;
+  author: string | null;
+  title: string | null;
+  body: string;
+  imageUrl: string | null;
+  publishedAt: string;
+  case: { id: string; status: string; certainty: Certainty | null; conclusion: string | null } | null;
+  reporterCount: number;
+};
+
+export type CaseSummary = {
+  id: string;
+  title: string;
+  claim: string;
+  kind: "real" | "fictional";
+  status: string;
+  certainty: Certainty | null;
+  conclusion: string | null;
+  createdAt: string;
+};
+
+export type CaseFile = CaseSummary & {
+  versions: { id: string; position: number; content: string; sourceName: string; publishedAt: string | null }[];
+  evidence: {
+    id: string;
+    number: number;
+    title: string;
+    content: string;
+    sourceName: string;
+    publishedAt: string | null;
+    stance: "supports" | "contradicts" | "context";
+    strength: string;
+  }[];
+};
+
+export type WhatIf = {
+  kind: "real" | "fictional";
+  versions: { id: string; label: string; text: string; changes: string[] }[];
+  takeaway: string;
+  source: "gemini" | "fallback";
+};
+
+export type Answer = {
+  answer: string;
+  citations: { number: number; title: string; href: string; certainty: Certainty | null }[];
+  source: "gemini" | "fallback";
+};
+
+export type Check = {
+  text: string;
+  judged: { url: string; title: string; label: string; tone: string; conclusion: string | null } | null;
+  signals: { label: string; tone: string; signs: { label: string; quote: string }[] }[];
+  factChecks: { title?: string; publisher?: string; url?: string; rating?: string }[];
+};
+
+export const CERTAINTY_LABELS: Record<Certainty, string> = {
+  established: "Établi",
+  probable: "Probable",
+  uncertain: "Incertain",
+  contradicted: "Contredit",
+  insufficient: "Informations insuffisantes",
+};
+
