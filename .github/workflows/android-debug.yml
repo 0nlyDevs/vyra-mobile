@@ -27,7 +27,7 @@ jobs:
       # Updatable over a previous install: same debug keystore (from the prebuild template) + increasing versionCode.
       - name: Bump versionCode
         run: sed -i -E 's/versionCode [0-9]+/versionCode ${{ github.run_number }}/' android/app/build.gradle
-      - run: ./gradlew assembleDebug --no-daemon
+      - run: ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=arm64-v8a
         working-directory: android
       - name: Name APK
         id: apk
