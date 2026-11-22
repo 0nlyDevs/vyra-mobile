@@ -27,6 +27,7 @@ import {
   FileText as PFileText,
   Gear as PGear,
   Hourglass as PHourglass,
+  Info as PInfo,
   ImageSquare as PImageSquare,
   Images as PImages,
   Link as PLink,
@@ -95,6 +96,7 @@ export const CloudSlash = duo(PCloudSlash);
 export const FileText = duo(PFileText);
 export const Gear = duo(PGear);
 export const Hourglass = duo(PHourglass);
+export const Info = duo(PInfo);
 export const ImageSquare = duo(PImageSquare);
 export const Images = duo(PImages);
 export const Link = duo(PLink);

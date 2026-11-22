@@ -10,6 +10,12 @@ import { Button, Card, CertaintyBadge, Loading, Notice, Quote, Screen, Section, 
 
 const STANCE = { supports: "Appuie", contradicts: "Contredit", context: "Contexte" } as const;
 
+function stanceColors(c: ReturnType<typeof useTheme>, stance: keyof typeof STANCE) {
+  if (stance === "supports") return { bg: c.verdict.true.soft, fg: c.verdict.true.ink };
+  if (stance === "contradicts") return { bg: c.verdict.false.soft, fg: c.verdict.false.ink };
+  return { bg: c.muted, fg: c.mutedForeground };
+}
+
 /** Le dossier d'une affaire : la conclusion, What If ?, les versions retrouvées, les pièces. */
 export default function CaseScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -104,8 +110,9 @@ export default function CaseScreen() {
                     <T tone="tabular" style={{ fontSize: 13, color: c.mutedForeground }}>
                       Pièce n° {piece.number}
                     </T>
-                    <View style={{ borderRadius: radius.tag, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: c.muted }}>
-                      <T style={{ fontFamily: fonts.semibold, fontSize: 13 }}>{STANCE[piece.stance]}</T>
+                    {/* Comme sur le site (EVIDENCE_STANCE_TONES) : appuie en vert, contredit en rouge, contexte neutre. */}
+                    <View style={{ borderRadius: radius.tag, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: stanceColors(c, piece.stance).bg }}>
+                      <T style={{ fontFamily: fonts.semibold, fontSize: 13, color: stanceColors(c, piece.stance).fg }}>{STANCE[piece.stance]}</T>
                     </View>
                   </View>
                   <T style={{ fontFamily: fonts.bold }}>{piece.title}</T>
