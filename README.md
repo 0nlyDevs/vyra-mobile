@@ -20,7 +20,8 @@ La connexion se fait avec l'e-mail et le mot de passe du site ; le jeton est gar
 
 ```bash
 npm install --legacy-peer-deps
-EXPO_PUBLIC_API_URL=http://<adresse du site Vyra> npx expo start
+cp .env.example .env.local   # puis y mettre l'adresse du site Vyra
+npx expo start
 ```
 
 `EXPO_PUBLIC_API_URL` : l'adresse du site (par défaut `http://localhost:3000`). Sur un téléphone
