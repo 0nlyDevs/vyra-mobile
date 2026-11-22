@@ -1,21 +1,41 @@
 # Vyra mobile
 
 Application mobile de Vyra : voir d'où vient une information et la faire juger sur pièces.
+Expo (React Native), Expo Router. Elle lit l'API du site (`/api/v1`, voir `docs/API-MOBILE.md` du dépôt `vyra`).
 
-Expo (React Native), Expo Router. Le thème est dans `src/lib/tokens.ts` (encre, papier, accent rouge).
+## Écrans
+
+| Onglet | Rôle |
+|---|---|
+| Fil | le fil d'actualité (Madagascar ou monde), avec l'état de vérification de chaque publication |
+| Affaires | les affaires ; le dossier montre la conclusion, What If ?, les versions retrouvées, les pièces |
+| Vérifier | un texte ou un lien reçu : affaire déjà jugée, signes d'alerte, vérifications publiées |
+| Assistant | des questions, des réponses qui citent les affaires jugées |
+| Compte | le profil, le serveur, se déconnecter |
+
+La connexion se fait avec l'e-mail et le mot de passe du site ; le jeton est gardé sur le téléphone
+(`src/lib/session.tsx`).
 
 ## Lancer
 
 ```bash
-npm install
-EXPO_PUBLIC_API_URL=http://<adresse du serveur>:8000 npx expo start
+npm install --legacy-peer-deps
+EXPO_PUBLIC_API_URL=http://<adresse du site Vyra> npx expo start
 ```
 
-`EXPO_PUBLIC_API_URL` : l'adresse de l'API que l'application appelle (voir `src/lib/config.ts`).
+`EXPO_PUBLIC_API_URL` : l'adresse du site (par défaut `http://localhost:3000`). Sur un téléphone
+Android branché à l'ordinateur : `adb reverse tcp:3000 tcp:3000`.
 
 ## Vérifier
 
 ```bash
-npm run lint
+npx tsc --noEmit
 npm test
+npx expo lint
 ```
+
+Le thème est dans `src/lib/tokens.ts` (encre, papier, accent rouge).
+
+## Pas encore
+
+Scan d'image ou de son, tribunal (audience et vote), alertes, jeu : l'API du site ne les expose pas encore.
