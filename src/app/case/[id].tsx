@@ -1,11 +1,12 @@
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { View } from "react-native";
+import { ScrollView, View } from "react-native";
 
 import { ApiError, type CaseFile, post, type WhatIf } from "@/lib/api";
 import { Sparkle } from "@/lib/icons";
 import { fonts, radius, useTheme } from "@/lib/theme";
 import { useApi } from "@/lib/use-api";
+import { Photo } from "@/ui/photo";
 import { Button, Card, CertaintyBadge, Loading, Notice, Quote, Screen, Section, T, VerdictPanel, styles } from "@/ui/ui";
 
 const STANCE = { supports: "Appuie", contradicts: "Contredit", context: "Contexte" } as const;
@@ -85,20 +86,22 @@ export default function CaseScreen() {
           </Section>
 
           {data.versions.length > 0 && (
-            <Section title="Versions retrouvées" note="Dans l’ordre où elles ont circulé.">
-              {data.versions.map((version) => (
-                <View key={version.id} style={{ flexDirection: "row", gap: 12, borderBottomWidth: 1, borderBottomColor: c.border, paddingBottom: 14 }}>
-                  <View style={{ width: 34, height: 34, borderRadius: 17, borderWidth: 1, borderColor: c.input, alignItems: "center", justifyContent: "center", backgroundColor: c.card }}>
-                    <T tone="tabular" style={{ fontSize: 14 }}>
-                      {String(version.position).padStart(2, "0")}
-                    </T>
+            <Section title="Versions retrouvées" note="Dans l’ordre où elles ont circulé. Faites défiler de côté.">
+              {/* Les versions se lisent côte à côte : une rangée qui défile, pas une pile. */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}>
+                {data.versions.map((version) => (
+                  <View key={version.id} style={{ width: 268, backgroundColor: c.card, borderColor: c.border, borderWidth: 1, borderRadius: radius.card, overflow: "hidden" }}>
+                    {version.imagePath ? <Photo uri={version.imagePath} ratio={16 / 10} /> : null}
+                    <View style={{ padding: 14, gap: 6 }}>
+                      <T tone="tabular" style={{ fontSize: 12, color: c.mutedForeground }}>
+                        Version {String(version.position).padStart(2, "0")}
+                      </T>
+                      <T style={{ fontFamily: fonts.semibold, fontSize: 14 }}>{version.sourceName}</T>
+                      <T numberOfLines={version.imagePath ? 4 : 8}>{version.content}</T>
+                    </View>
                   </View>
-                  <View style={{ flex: 1, gap: 4 }}>
-                    <T style={{ fontFamily: fonts.semibold, fontSize: 14 }}>{version.sourceName}</T>
-                    <T numberOfLines={5}>{version.content}</T>
-                  </View>
-                </View>
-              ))}
+                ))}
+              </ScrollView>
             </Section>
           )}
 

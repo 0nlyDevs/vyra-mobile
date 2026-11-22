@@ -63,10 +63,12 @@ export type CaseSummary = {
   certainty: Certainty | null;
   conclusion: string | null;
   createdAt: string;
+  /** Première image trouvée pour l'affaire : adresse complète ou chemin du site. */
+  imageUrl?: string | null;
 };
 
 export type CaseFile = CaseSummary & {
-  versions: { id: string; position: number; content: string; sourceName: string; publishedAt: string | null }[];
+  versions: { id: string; position: number; content: string; sourceName: string; publishedAt: string | null; imagePath?: string | null }[];
   evidence: {
     id: string;
     number: number;
