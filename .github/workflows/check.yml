@@ -33,7 +33,8 @@ jobs:
 
   parcours:
     name: Parcours dans le navigateur, avec le site
-    runs-on: ubuntu-latest
+    # Playwright ne sait pas encore installer son navigateur sur ubuntu-latest (26.04).
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     services:
       db:
