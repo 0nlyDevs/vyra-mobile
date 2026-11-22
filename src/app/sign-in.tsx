@@ -37,10 +37,10 @@ function TextLink({ label, onPress }: { label: string; onPress: () => void }) {
 function DemoAccounts() {
   const c = useTheme();
   const { startSession } = useSession();
-  const { data } = useApi<DemoProfile[] | { profiles: DemoProfile[] }>("/auth/demo");
+  const { data } = useApi<{ profiles: DemoProfile[] }>("/auth/demo");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const profiles = Array.isArray(data) ? data : (data?.profiles ?? []);
+  const profiles = data?.profiles ?? [];
   if (profiles.length === 0) return null;
 
   async function enter(profileId: string) {
@@ -118,7 +118,7 @@ export default function SignIn() {
 
   const heading = HEADINGS[mode];
   const label = mode === "login" ? (busy ? "Connexion…" : "Se connecter") : mode === "signup" ? (busy ? "Création du compte…" : "Créer un compte") : busy ? "Envoi…" : "Recevoir un lien";
-  const ready = mode === "forgot" ? !!email.trim() : mode === "signup" ? !!name.trim() && !!email.trim() && password.length >= 8 : !!email.trim() && password.length > 0;
+  const ready = mode === "forgot" ? !!email.trim() : mode === "signup" ? name.trim().length >= 2 && !!email.trim() && password.length >= 8 : !!email.trim() && password.length > 0;
 
   return (
     <Screen>
