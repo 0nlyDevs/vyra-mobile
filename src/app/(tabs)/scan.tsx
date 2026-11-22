@@ -12,15 +12,15 @@ import { AddressBook } from "@/lib/icons";
 import { Button, Chip, Notice, Screen, T } from "@/ui/ui";
 
 // Scan : les mêmes sept onglets que la page /scan du site, dans le même ordre et avec les mêmes
-// clés d'adresse (`/scan?onglet=sceau&code=…`), pour y revenir ou y être envoyé.
+// clés d'adresse (`/scan?tab=seal&code=…`), pour y revenir ou y être envoyé.
 const TABS = [
   { key: "image", label: "Image" },
   { key: "video", label: "Vidéo" },
   { key: "audio", label: "Vocal" },
   { key: "link", label: "Lien" },
-  { key: "texte", label: "Texte" },
+  { key: "text", label: "Texte" },
   { key: "source", label: "Est-ce bien eux ?" },
-  { key: "sceau", label: "Sceau" },
+  { key: "seal", label: "Sceau" },
 ] as const;
 
 type Tab = (typeof TABS)[number]["key"];
@@ -31,8 +31,8 @@ function isTab(value: unknown): value is Tab {
 
 export default function ScanScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ onglet?: string; code?: string; c?: string; s?: string }>();
-  const tab: Tab = isTab(params.onglet) ? params.onglet : "image";
+  const params = useLocalSearchParams<{ tab?: string; code?: string; c?: string; s?: string }>();
+  const tab: Tab = isTab(params.tab) ? params.tab : "image";
   // Le lien d'un QR (`?c=&s=`) ou un code tapé ailleurs arrive tout prêt dans le champ du sceau.
   const sealInput = params.c && params.s ? `?c=${params.c}&s=${params.s}` : params.code;
   return (
@@ -46,7 +46,7 @@ export default function ScanScreen() {
       {/* Sept onglets : la rangée défile de côté, comme sur le site en petit écran. */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
         {TABS.map((item) => (
-          <Chip key={item.key} label={item.label} selected={item.key === tab} onPress={() => router.setParams({ onglet: item.key })} />
+          <Chip key={item.key} label={item.label} selected={item.key === tab} onPress={() => router.setParams({ tab: item.key })} />
         ))}
       </ScrollView>
       {/* Chaque examen garde son état tant qu'on reste sur son onglet ; en changer repart de zéro. */}
@@ -54,14 +54,14 @@ export default function ScanScreen() {
       {tab === "video" && <VideoScan />}
       {tab === "audio" && <AudioScan />}
       {tab === "link" && <LinkScan />}
-      {tab === "texte" && <TextCheck />}
+      {tab === "text" && <TextCheck />}
       {tab === "source" && (
         <>
           <Impersonation />
           <Button label="Ouvrir l’annuaire officiel" icon={AddressBook} variant="outline" onPress={() => router.push("/directory")} />
         </>
       )}
-      {tab === "sceau" && <SealVerify key={sealInput ?? ""} initial={sealInput} />}
+      {tab === "seal" && <SealVerify key={sealInput ?? ""} initial={sealInput} />}
       <Notice>Indices relevés avec l’aide de l’IA. Ce ne sont pas des preuves : seules les pièces d’une affaire, jugées au tribunal, permettent de conclure.</Notice>
     </Screen>
   );

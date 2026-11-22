@@ -7,7 +7,7 @@ import { type Icon, Question, SealCheck as SealIcon, ShieldWarning } from "@/lib
 import { fonts, radius, useTheme } from "@/lib/theme";
 import { Button, Field, Notice, Quote, T, VerdictBadge } from "@/ui/ui";
 
-/** Comme la page /verifier/sceau du site : vert pour authentique, rouge pour une carte retouchée,
+/** Comme la page /check/seal du site : vert pour authentique, rouge pour une carte retouchée,
  * pointillés neutres pour un code inconnu. Toujours avec l'icône et les mots. */
 function Result({ icon: Glyph, title, tone, children }: { icon: Icon; title: string; tone: "true" | "false" | "neutral"; children: ReactNode }) {
   const c = useTheme();
@@ -57,7 +57,7 @@ function Outcome({ check }: { check: SealResult }) {
 }
 
 /** Vérifier un sceau : le code imprimé sous la carte (VY-XXXX-XXXX) ou le lien de son QR. Un code
- * reçu dans l'adresse (`/scan?onglet=sceau&code=…`, ou le lien d'un QR) est déjà recopié dans le champ. */
+ * reçu dans l'adresse (`/scan?tab=seal&code=…`, ou le lien d'un QR) est déjà recopié dans le champ. */
 export function SealVerify({ initial }: { initial?: string }) {
   const [input, setInput] = useState(initial ?? "");
   const [busy, setBusy] = useState(false);

@@ -85,7 +85,7 @@ function SealCard({ file }: { file: CaseFile }) {
         </View>
       </View>
       <Button label="Partager la conclusion scellée" icon={ShareNetwork} variant="outline" onPress={share} />
-      <Button label="Vérifier un sceau reçu" variant="ghost" onPress={() => router.push({ pathname: "/scan", params: { onglet: "sceau" } })} />
+      <Button label="Vérifier un sceau reçu" variant="ghost" onPress={() => router.push({ pathname: "/scan", params: { tab: "seal" } })} />
     </Card>
   );
 }
