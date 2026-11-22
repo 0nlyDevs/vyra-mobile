@@ -165,12 +165,19 @@ export function Button({ label, icon: Glyph, variant = "primary", busy, disabled
   );
 }
 
+// Le libellé visible devient le nom du champ pour VoiceOver et TalkBack ; il n'est pas relu une
+// seconde fois à part.
 export function Field({ label, style, ...rest }: TextInputProps & { label?: string }) {
   const c = useTheme();
   return (
     <View style={{ gap: 6 }}>
-      {label && <T style={{ fontFamily: fonts.medium, fontSize: 15 }}>{label}</T>}
+      {label && (
+        <T style={{ fontFamily: fonts.medium, fontSize: 15 }} aria-hidden>
+          {label}
+        </T>
+      )}
       <TextInput
+        accessibilityLabel={label}
         placeholderTextColor={c.mutedForeground}
         selectionColor={c.primary + "59"}
         cursorColor={c.primary}

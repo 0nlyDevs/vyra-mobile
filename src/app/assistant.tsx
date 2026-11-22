@@ -116,7 +116,7 @@ export default function Assistant() {
         </ScrollView>
         <View style={{ padding: 12, gap: 8, flexDirection: "row", alignItems: "flex-end", borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.background }}>
           <View style={{ flex: 1 }}>
-            <Field value={input} onChangeText={setInput} placeholder="Votre question" multiline style={{ minHeight: 48, maxHeight: 120 }} />
+            <Field value={input} onChangeText={setInput} placeholder="Votre question" accessibilityLabel="Votre question pour l’assistant" multiline style={{ minHeight: 48, maxHeight: 120 }} />
           </View>
           <View style={{ width: 56 }}>
             <Button label="" icon={PaperPlaneTilt} busy={busy} disabled={!input.trim()} onPress={send} accessibilityLabel="Envoyer" style={{ paddingHorizontal: 0 }} />
