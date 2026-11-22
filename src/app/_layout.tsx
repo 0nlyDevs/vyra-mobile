@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AppHeader } from "@/components/app-header";
+import { NoAiProvider } from "@/lib/no-ai";
 import { SessionProvider, useSession } from "@/lib/session";
 import { useTheme } from "@/lib/theme";
 import { AppChromeContext } from "@/ui/ui";
@@ -27,7 +28,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SessionProvider>
-        <Routes />
+        <NoAiProvider>
+          <Routes />
+        </NoAiProvider>
       </SessionProvider>
     </SafeAreaProvider>
   );
@@ -50,6 +53,7 @@ function Routes() {
           <Stack.Protected guard={status === "in"}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="case/[id]" />
+            <Stack.Screen name="directory" />
           </Stack.Protected>
           <Stack.Protected guard={status === "out"}>
             <Stack.Screen name="sign-in" />

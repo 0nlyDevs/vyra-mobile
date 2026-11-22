@@ -5,7 +5,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { type Answer, ApiError, caseIdFrom, post } from "@/lib/api";
 import { API_URL } from "@/lib/config";
-import { PaperPlaneTilt } from "@/lib/icons";
+import { EyeSlash, PaperPlaneTilt } from "@/lib/icons";
+import { useNoAi } from "@/lib/no-ai";
 import { fonts, radius, useTheme } from "@/lib/theme";
 import { Button, CertaintyBadge, Field, Notice, PressCard, T, useAppChrome } from "@/ui/ui";
 
@@ -16,6 +17,7 @@ export default function Assistant() {
   const c = useTheme();
   const chrome = useAppChrome();
   const router = useRouter();
+  const { noAi } = useNoAi();
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -48,6 +50,7 @@ export default function Assistant() {
           <View style={{ gap: 6 }}>
             <T tone="title">Assistant</T>
             {messages.length === 0 && <T tone="muted">Posez une question sur une information qui circule. L’assistant ne répond qu’avec les affaires jugées, et les cite.</T>}
+            {noAi && <Notice>Mode Sans IA : les réponses rédigées par l’IA sont masquées, les affaires citées restent.</Notice>}
           </View>
           {messages.map((message, index) => (
             <View key={`${message.role}-${index}`} style={{ alignSelf: message.role === "user" ? "flex-end" : "flex-start", maxWidth: "88%", gap: 8 }}>
@@ -59,11 +62,22 @@ export default function Assistant() {
                   borderBottomLeftRadius: message.role === "user" ? radius.card : 6,
                   padding: 14,
                   backgroundColor: message.role === "user" ? c.primary : c.card,
+                  // La réponse est rédigée par l'IA : en pointillés, comme partout dans l'application.
                   borderWidth: message.role === "user" ? 0 : 1,
-                  borderColor: c.border,
+                  borderStyle: message.role === "user" ? "solid" : "dashed",
+                  borderColor: message.role === "user" ? c.border : c.foreground + "73",
                 }}
               >
-                <T style={{ color: message.role === "user" ? c.primaryForeground : c.foreground }}>{message.text}</T>
+                {message.role === "assistant" && noAi ? (
+                  <View style={{ flexDirection: "row", gap: 8 }}>
+                    <EyeSlash size={16} color={c.mutedForeground} style={{ marginTop: 2 }} />
+                    <T tone="muted" style={{ flex: 1 }}>
+                      Masqué en mode Sans IA, qui n’affiche que les faits : Réponse de l’assistant.
+                    </T>
+                  </View>
+                ) : (
+                  <T style={{ color: message.role === "user" ? c.primaryForeground : c.foreground }}>{message.text}</T>
+                )}
               </View>
               {message.citations?.map((citation) => {
                 const id = caseIdFrom(citation.href);
