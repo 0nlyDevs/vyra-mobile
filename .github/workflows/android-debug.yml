@@ -1,0 +1,44 @@
+name: Build / Debug
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_PUBLIC_WEB_URL: https://vyra-mg.vercel.app
+      EXPO_PUBLIC_API_URL: https://vyra-mg.vercel.app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm ci --legacy-peer-deps
+      - run: npx expo prebuild --platform android --no-install
+      # Updatable over a previous install: same debug keystore (from the prebuild template) + increasing versionCode.
+      - name: Bump versionCode
+        run: sed -i -E 's/versionCode [0-9]+/versionCode ${{ github.run_number }}/' android/app/build.gradle
+      # Debug variants skip JS bundling (expect Metro) -> white screen on its own; embed the bundle.
+      - name: Embed JS bundle
+        run: sed -i 's/^react {/react {\n    debuggableVariants = []/' android/app/build.gradle
+      - run: ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=arm64-v8a
+        working-directory: android
+      - name: Name APK
+        id: apk
+        run: |
+          sha=$(echo "${{ github.event.pull_request.head.sha || github.sha }}" | cut -c1-7)
+          mv android/app/build/outputs/apk/debug/app-debug.apk "vyra-$sha.apk"
+          echo "name=vyra-$sha" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.apk.outputs.name }}
+          path: ${{ steps.apk.outputs.name }}.apk
